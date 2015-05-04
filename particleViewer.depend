@@ -1,0 +1,49 @@
+# depslib dependency file v1.0
+1151765654 source:/home/deparis/opengl/first_test/freeflycamera.cpp
+	"freeflycamera.h"
+	<cmath>
+	<GL/glu.h>
+
+1430560396 /home/deparis/opengl/first_test/freeflycamera.h
+	"vector3d.h"
+	<SDL/SDL.h>
+	<map>
+	<string>
+
+1151738249 /home/deparis/opengl/first_test/vector3d.h
+
+1430560743 source:/home/deparis/opengl/first_test/main.cpp
+	<SDL/SDL.h>
+	<GL/gl.h>
+	<GL/glu.h>
+	<cstdlib>
+	"freeflycamera.h"
+	"scene.h"
+	"Part.h"
+
+1430560699 /home/deparis/opengl/first_test/scene.h
+	"Part.h"
+
+1430558810 /home/deparis/opengl/first_test/Part.h
+
+1430558240 source:/home/deparis/opengl/first_test/Part.c
+	"Part.h"
+	<stdlib.h>
+	<stdio.h>
+	<math.h>
+
+1430560892 source:/home/deparis/opengl/first_test/scene.cpp
+	"scene.h"
+	<GL/gl.h>
+	<GL/glu.h>
+
+1151737733 source:/home/deparis/opengl/first_test/vector3d.cpp
+	"vector3d.h"
+	<cmath>
+
+1430558751 source:/home/deparis/opengl/first_test/Part.cpp
+	"Part.h"
+	<cstdlib>
+	<cstdio>
+	<math.h>
+
