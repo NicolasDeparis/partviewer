@@ -1,14 +1,14 @@
 SOURCES =	main.cpp \
-		sdlglutils.cpp \
 		vector3d.cpp \
 		freeflycamera.cpp \
-		scene.cpp
+		scene.cpp\
+		Part.cpp
 OBJECTS	=	$(SOURCES:.cpp=.o)
-TARGET	=	sdlgl_09_freefly	
-LIBS	=	$(shell sdl-config --libs) -lSDL_image -lGL -lGLU 
+TARGET	=	viewer
+LIBS	=	$(shell sdl-config --libs) -lSDL -lGL -lGLU
 
 all: $(OBJECTS)
-	g++ $(LIBS) -o $(TARGET) $(OBJECTS)
+	g++  -o $(TARGET) $(OBJECTS) $(LIBS)
 
 %o: %cpp
 	g++ -o $@ -c $<

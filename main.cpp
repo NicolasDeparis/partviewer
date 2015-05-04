@@ -3,7 +3,6 @@
 #include <GL/glu.h>
 #include <cstdlib>
 
-//#include "sdlglutils.h"
 #include "freeflycamera.h"
 #include "scene.h"
 #include "Part.h"
@@ -21,8 +20,8 @@ const int scale = 128;
 
 //const int nstep = 1; int num[nstep]={10};
 //const int nstep = 2; int num[nstep]={0,10};
-const int nstep = 6; int num[nstep]={0,2,4,6,8,10};
-//const int nstep = 11; int num[nstep]={0,1,2,3,4,5,6,7,8,9,10};
+//const int nstep = 6; int num[nstep]={0,2,4,6,8,10};
+const int nstep = 11; int num[nstep]={0,1,2,3,4,5,6,7,8,9,10};
 //const int nstep = 6; int num[nstep]={5,6,7,8,9,10};
 
 
