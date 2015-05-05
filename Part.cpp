@@ -2,31 +2,80 @@
 
 #include <cstdlib>
 #include <cstdio>
-
 #include <math.h>
 #include <omp.h>
-
-
-//#define STARS
+#include <GL/gl.h>
+#include <GL/glu.h>
 
 Part::Part(int n){
 	alloc(n);
 }
 
-Part::Part( char* folder, int  fileNumber, int  nproc){
+Part::Part( char* folder, int  fileNumber, int  nproc, int s, int star){
+  m_star = star;
   int npartmax = 128*128*128;// getNpart(folder,fileNumber,nproc);
 	alloc(npartmax);
   read(folder, fileNumber, nproc);
  // setAge();
+
+
+
+
+/*
+  int taille = m_N*3*sizeof(float);
+
+  // Destruction d'un éventuel ancien VBO
+  if(glIsBuffer(m_vbo) == GL_TRUE)
+      glDeleteBuffers(1, &m_vbo);
+
+  // Génération de l'ID
+  glGenBuffers(1, &m_vbo);
+
+  // Verrouillage du VBO
+  glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+    // Allocation de la mémoire vidéo
+    glBufferData(GL_ARRAY_BUFFER, taille, 0, GL_STATIC_DRAW);
+
+    // Transfert des données
+    glBufferSubData(GL_ARRAY_BUFFER, 0, taille, m_pos);
+
+  // Déverrouillage de l'objet
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+*/
+
+
+/*
+// Génération des buffers
+glGenBuffers( 1, &m_vbo );
+
+// Buffer d'informations de vertex
+glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+glBufferData(GL_ARRAY_BUFFER, sizeof(*m_pos), m_pos, GL_STATIC_DRAW);
+//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(*m_pos), m_pos);
+*/
+
+
 }
 
+float *Part::getPos()    {	return m_pos;     }
+float *Part::getVel()    {	return m_vel;     }
+int   Part::getN()       {	return m_N;     }
+float Part::getA()       {	return m_a;     }
+float Part::getT()       {	return m_t;     }
+float Part::getX  (int i){	return m_pos[3*i+0];  }
+float Part::getY  (int i){	return m_pos[3*i+1];  }
+float Part::getZ  (int i){	return m_pos[3*i+2];  }
+float Part::getVX (int i){	return m_vel[3*i+0];  }
+float Part::getVY (int i){	return m_vel[3*i+1];  }
+float Part::getVZ (int i){	return m_vel[3*i+2];  }
+float Part::getAge(int i){	return m_age[i];}
+int   Part::getIdx(int i){	return (int)m_idx[i];}
+float Part::getAgeMax(){	return m_agemax;}
+
 void Part::alloc(int npartmax){
-	m_x   =  (float*)calloc(npartmax,sizeof(float));
-	m_y   =  (float*)calloc(npartmax,sizeof(float));
-	m_z   =  (float*)calloc(npartmax,sizeof(float));
-	m_vx  =  (float*)calloc(npartmax,sizeof(float));
-	m_vy  =  (float*)calloc(npartmax,sizeof(float));
-	m_vz  =  (float*)calloc(npartmax,sizeof(float));
+	m_pos =  (float*)calloc(3*npartmax,sizeof(float));
+	m_vel =  (float*)calloc(3*npartmax,sizeof(float));
 	m_idx =  (float*)calloc(npartmax,sizeof(float));
 	m_age =  (float*)calloc(npartmax,sizeof(float));
 }
@@ -47,11 +96,9 @@ void Part::read(char* folder, int  fileNumber, int  nproc){
 	//printf("Reading %s\n",filename);
 
 	for (int np=0; np<m_nproc; np++){
-#ifdef STARS
-    sprintf(filename, "%s%05d/star/star.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
-#else
-    sprintf(filename, "%s%05d/part/part.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
-#endif // STARS
+if(m_star) sprintf(filename, "%s%05d/star/star.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
+else       sprintf(filename, "%s%05d/part/part.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
+
 
   //  printf("Reading %s\n",filename);
 		f = fopen(filename, "rb");
@@ -61,19 +108,17 @@ void Part::read(char* folder, int  fileNumber, int  nproc){
 		m_N += nloc;
 
 		for(int ii=0; ii<nloc; ii++){
-			dump = fread (&(m_x[i]),  sizeof(float), 1, f);
-			dump = fread (&(m_y[i]),  sizeof(float), 1, f);
-			dump = fread (&(m_z[i]),  sizeof(float), 1, f);
-			dump = fread (&(m_vx[i]), sizeof(float), 1, f);
-			dump = fread (&(m_vy[i]), sizeof(float), 1, f);
-			dump = fread (&(m_vz[i]), sizeof(float), 1, f);
+			dump = fread(&(m_pos[3*i]), sizeof(float), 3, f);
+			dump = fread(&(m_vel[3*i]), sizeof(float), 3, f);
+
 			dump = fread (&(m_idx[i]),sizeof(float), 1, f);
-			dump = fread (&mass,      sizeof(float), 1, f);
-			dump = fread (&epot,      sizeof(float), 1, f);
-			dump = fread (&ekin,      sizeof(float), 1, f);
-#ifdef STARS
-			dump = fread (&(m_age[i]),sizeof(float), 1, f);
-#endif // STARS
+
+			dump = fread(&mass,         sizeof(float), 1, f);
+			dump = fread(&epot,         sizeof(float), 1, f);
+			dump = fread(&ekin,         sizeof(float), 1, f);
+if(m_star)
+			dump = fread(&(m_age[i]),   sizeof(float), 1, f);
+
 			i++;
 		}
 		fclose(f);
@@ -89,11 +134,8 @@ int Part::getNpart(char* folder, int  fileNumber, int  nproc){
 
     char filename[128];
 
-#ifdef STARS
-    sprintf(filename, "%s%05d/star/star.%05d.p%05d", folder,fileNumber, fileNumber, np);
-#else
-    sprintf(filename, "%s%05d/part/part.%05d.p%05d", folder,fileNumber, fileNumber, np);
-#endif // STARS
+if(m_star)  sprintf(filename, "%s%05d/star/star.%05d.p%05d", folder,fileNumber, fileNumber, np);
+else        sprintf(filename, "%s%05d/part/part.%05d.p%05d", folder,fileNumber, fileNumber, np);
 
     FILE* f = fopen(filename, "rb");
     int nloc;
@@ -117,36 +159,13 @@ void Part::setAge(){
 	}
 }
 
-int   Part::getN()       {	return m_N;     }
-float Part::getA()       {	return m_a;     }
-float Part::getT()       {	return m_t;     }
-float Part::getX  (int i){	return m_x[i];  }
-float Part::getY  (int i){	return m_y[i];  }
-float Part::getZ  (int i){	return m_z[i];  }
-float Part::getVX  (int i){	return m_vx[i];  }
-float Part::getVY  (int i){	return m_vy[i];  }
-float Part::getVZ  (int i){	return m_vz[i];  }
-float Part::getAge(int i){	return m_age[i];}
-int   Part::getIdx(int i){	return (int)m_idx[i];}
-float Part::getAgeMax(){	return m_agemax;}
-
-
-
 
 void Part::move(float dt){
   #pragma omp parallel for
-	for(int i=0; i< m_N; i++){
-    m_x[i] += m_vx[i]*dt;
-    if (m_x[i]>1) m_x[i]--;
-    if (m_x[i]<0) m_x[i]++;
-
-    m_y[i] += m_vy[i]*dt;
-    if (m_y[i]>1) m_y[i]--;
-    if (m_y[i]<0) m_y[i]++;
-
-    m_z[i] += m_vz[i]*dt;
-    if (m_z[i]>1) m_z[i]--;
-    if (m_z[i]<0) m_z[i]++;
+	for(int i=0; i< 3*m_N; i++){
+    m_pos[i] += m_vel[i]*dt;
+    if (m_pos[i]>1) m_pos[i]--;
+    if (m_pos[i]<0) m_pos[i]++;
   }
 }
 
@@ -157,9 +176,9 @@ void Part::setV( Part* stop, float dt){
     int id_current = getIdx(i);
     int id_stop = id_current; //stop.findIdx(id_current);
 
-    float dx = stop->getX(id_stop) - m_x[i];
-    float dy = stop->getY(id_stop) - m_y[i];
-    float dz = stop->getZ(id_stop) - m_z[i];
+    float dx = stop->getX(id_stop) - m_pos[3*i+0];
+    float dy = stop->getY(id_stop) - m_pos[3*i+1];
+    float dz = stop->getZ(id_stop) - m_pos[3*i+2];
 
     float lim = 0.5;
 
@@ -167,9 +186,9 @@ void Part::setV( Part* stop, float dt){
     if (dy> lim) dy-=1.;    if (dy<-lim) dy+=1.;
     if (dz> lim) dz-=1.;    if (dz<-lim) dz+=1.;
 
-    m_vx[i] = dx/dt;
-    m_vy[i] = dy/dt;
-    m_vz[i] = dz/dt;
+    m_vel[3*i+0] = dx/dt;
+    m_vel[3*i+1] = dy/dt;
+    m_vel[3*i+2] = dz/dt;
 
     //   ||.|||||||||||.|
     //      |||||||||||.|||.
@@ -190,9 +209,9 @@ void Part::interpPos(Part* start, float *t, int step, int time_max){
 
     if (cur_t>start->getAge(i)){
 
-      float dx = start->getX(i) - m_x[i];
-      float dy = start->getY(i) - m_y[i];
-      float dz = start->getZ(i) - m_z[i];
+      float dx = start->getX(i) - m_pos[3*i+0];
+      float dy = start->getY(i) - m_pos[3*i+1];
+      float dz = start->getZ(i) - m_pos[3*i+2];
 
       float lim = 0.5;
 
@@ -201,15 +220,14 @@ void Part::interpPos(Part* start, float *t, int step, int time_max){
       if (dz> lim) dz-=1.;  if (dz<-lim) dz+=1.;
 
       dt = time_max;
-      m_vx[i] = dx/dt;
-      m_vy[i] = dy/dt;
-      m_vz[i] = dz/dt;
+      m_vel[3*i+0] = dx/dt;
+      m_vel[3*i+1] = dy/dt;
+      m_vel[3*i+2] = dz/dt;
 
       dt = (t[step+1]-cur_t )/ (t[step+1]-t[step]) * time_max;
-      m_x[i] += dx/dt;
-      m_y[i] += dy/dt;
-      m_z[i] += dz/dt;
-
+      m_pos[3*i+0] += dx/dt;
+      m_pos[3*i+1] += dy/dt;
+      m_pos[3*i+2] += dz/dt;
 
     }
   }
@@ -226,9 +244,9 @@ void Part::sort(Part* init){
       int id2sort = init->getIdx(i);
 
       m_idx[id2sort]=init->getIdx(i);
-      m_x[id2sort]=init->getX(i);
-      m_y[id2sort]=init->getY(i);
-      m_z[id2sort]=init->getZ(i);
+      m_pos[3*id2sort+0]=init->getX(i);
+      m_pos[3*id2sort+1]=init->getY(i);
+      m_pos[3*id2sort+2]=init->getZ(i);
 
       m_age[id2sort]=init->getAge(i);
 	}
@@ -239,9 +257,9 @@ void Part::copy(Part* init){
   #pragma omp parallel for
   for (int i=0;i<m_N;i++){
       m_idx[i]  = (float)init->getIdx(i);
-      m_x[i]    = init->getX(i);
-      m_y[i]    = init->getY(i);
-      m_z[i]    = init->getZ(i);
+      m_pos[3*i+0]    = init->getX(i);
+      m_pos[3*i+1]    = init->getY(i);
+      m_pos[3*i+2]    = init->getZ(i);
       //m_age[i]  = init.getAge(i);
 	}
 }
@@ -253,13 +271,13 @@ int Part::append(Part* next, int cur_part, float t){
 
       if(next->getAge(i)>t) continue;
       m_idx[i]  = (float)next->getIdx(i);
-      m_x[i]    = next->getX(i);
-      m_y[i]    = next->getY(i);
-      m_z[i]    = next->getZ(i);
+      m_pos[3*i+0]    = next->getX(i);
+      m_pos[3*i+1]    = next->getY(i);
+      m_pos[3*i+2]    = next->getZ(i);
 
-      m_vx[i]    = next->getVX(i);
-      m_vy[i]    = next->getVY(i);
-      m_vz[i]    = next->getVZ(i);
+      m_vel[3*i+0]    = next->getVX(i);
+      m_vel[3*i+1]    = next->getVY(i);
+      m_vel[3*i+2]    = next->getVZ(i);
 
       m_age[i]  = next->getAge(i);
 

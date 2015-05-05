@@ -1,57 +1,94 @@
-
 #include "scene.h"
 #include <stdio.h>
+#include <stdlib.h>
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <math.h>
 
-void render_cube(float s){
+
+
+void render_cube(){
   glBegin(GL_LINES);
-    glVertex3i(0,0,0);glVertex3i(0,0,s);
-    glVertex3i(0,0,0);glVertex3i(0,s,0);
-    glVertex3i(0,s,0);glVertex3i(0,s,s);
-    glVertex3i(0,0,s);glVertex3i(0,s,s);
+    glVertex3i(0,0,0);glVertex3i(0,0,1);
+    glVertex3i(0,0,0);glVertex3i(0,1,0);
+    glVertex3i(0,1,0);glVertex3i(0,1,1);
+    glVertex3i(0,0,1);glVertex3i(0,1,1);
 
-    glVertex3i(s,0,0);glVertex3i(s,0,s);
-    glVertex3i(s,0,0);glVertex3i(s,s,0);
-    glVertex3i(s,s,0);glVertex3i(s,s,s);
-    glVertex3i(s,0,s);glVertex3i(s,s,s);
+    glVertex3i(1,0,0);glVertex3i(1,0,1);
+    glVertex3i(1,0,0);glVertex3i(1,1,0);
+    glVertex3i(1,1,0);glVertex3i(1,1,1);
+    glVertex3i(1,0,1);glVertex3i(1,1,1);
 
-    glVertex3i(0,0,0);glVertex3i(s,0,0);
-    glVertex3i(0,0,s);glVertex3i(s,0,s);
-    glVertex3i(0,s,0);glVertex3i(s,s,0);
-    glVertex3i(0,s,s);glVertex3i(s,s,s);
+    glVertex3i(0,0,0);glVertex3i(1,0,0);
+    glVertex3i(0,0,1);glVertex3i(1,0,1);
+    glVertex3i(0,1,0);glVertex3i(1,1,0);
+    glVertex3i(0,1,1);glVertex3i(1,1,1);
   glEnd();
 }
 
-void render_part(Part * part, float scale){
-  float agemax=part->getAgeMax();
+void render_part(Part *part, GLuint vbo){
 
-  for(int i=0; i<part->getN(); i++){
-    float x = part->getX(i)*scale;
-    float y = part->getY(i)*scale;
-    float z = part->getZ(i)*scale;
 
-#ifdef STARS
-    float age = part->getAge(i)/ agemax;
-    float r=255;
-    float v=255*age;
-    float b=255*age;
-#endif // STARS
+glBindBuffer(GL_ARRAY_BUFFER, vbo);
+glEnableClientState( GL_VERTEX_ARRAY );
 
-    glBegin(GL_POINTS);
-      glColor4f(1,1,1, 0.5);
-      glVertex3d(x,y,z);
-       // glColor3ub(r,v,b);
-    glEnd();
-  }
+    glVertexPointer(3, GL_FLOAT, 0, NULL);
+
+    glDrawArrays(GL_POINTS, 0, part->getN() );
+
+glDisableClientState( GL_VERTEX_ARRAY );
+glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+/*
+  glVertexPointer(3, GL_FLOAT, 3*sizeof(float),part->getPos() );
+  glEnableClientState( GL_VERTEX_ARRAY );
+  glDrawArrays(GL_POINTS, 0, part->getN());
+*/
+
+
 }
+void render_test(GLuint triangleVBO){
+  //Initialise VBO - do only once, at start of program
+  //Create a variable to hold the VBO identifier
+  //GLuint triangleVBO;
 
-void render(Part * part, float scale){
+  //Vertices of a triangle (counter-clockwise winding)
+  float data[] = {1.0, 0.0, 1.0, 0.0, 0.0, -1.0, -1.0, 0.0, 1.0};
+  //try float data[] = {0.0, 1.0, 0.0, -1.0, -1.0, 0.0, 1.0, -1.0, 0.0}; if the above doesn't work.
 
-  render_cube(scale);
-  render_part(part, scale);
+  //Create a new VBO and use the variable id to store the VBO id
+//  glGenBuffers(1, &triangleVBO);
 
+
+  //Make the new VBO active
+  glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+
+  //Upload vertex data to the video device
+  glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+
+  //Make the new VBO active. Repeat here incase changed since initialisation
+  glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+
+  //Draw Triangle from VBO - do each time window, view point or data changes
+  //Establish its 3 coordinates per vertex with zero stride in this array; necessary here
+  glVertexPointer(3, GL_FLOAT, 0, NULL);
+
+  //Establish array contains vertices (not normals, colours, texture coords etc)
+  glEnableClientState(GL_VERTEX_ARRAY);
+
+  //Actually draw the triangle, giving the number of vertices provided
+  glDrawArrays(GL_TRIANGLES, 0, sizeof(data) / sizeof(float) / 3);
+
+  //Force display to be drawn now
+  glFlush();
+}
+void render(Part * part, GLuint vbo){
+
+//  render_cube();
+  render_part(part, vbo);
+//  render_test(vbo);
   glFlush();
 }
 

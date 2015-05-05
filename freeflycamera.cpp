@@ -3,14 +3,14 @@
 #include <cmath>
 #include <GL/glu.h>
 
-FreeFlyCamera::FreeFlyCamera(const Vector3D & position)
+FreeFlyCamera::FreeFlyCamera(const Vector3D & position, float scale)
 {
     _position = position;
     _phi = 0;
     _theta = 0;
     VectorsFromAngles();
 
-    _speed = 0.01;
+    _speed = 0.01/scale;
     _sensivity = 0.2;
     _verticalMotionActive = false;
     _keyconf["forward"] = SDLK_z;

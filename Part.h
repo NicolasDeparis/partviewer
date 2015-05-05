@@ -9,30 +9,26 @@ private:
 	int  	m_npartmax;
 
 	int 	m_N;
-	float 	m_a;
+	float m_a;
 	float	m_t;
 	float m_agemax;
+	int m_star;
 
-	float* 	m_x;
-	float* 	m_y;
-	float* 	m_z;
+	float *m_pos;
+	float *m_vel;
 
-	float* 	m_vx;
-	float* 	m_vy;
-	float* 	m_vz;
+	float *m_idx;
+	float *m_age;
 
-	float* 	m_idx;
-	float* 	m_age;
+
 
 	void alloc(int npartmax);
 	void setAge();
   int getNpart(char* folder, int  fileNumber, int  nproc);
 
-  int findIdx(int idx);
-
 public:
 	Part(int N);
-	Part(char* folder, int  fileNumber, int  nproc);
+	Part(char* folder, int  fileNumber, int  nproc, int scale, int star);
 
 	void read(char* folder, int  fileNumber, int  nproc);
 
@@ -47,7 +43,14 @@ public:
 	float getVZ(int i);
 	int   getIdx(int i);
 	float getAge(int i);
+
+	float *getPos();
+	float *getVel();
+
 	float getAgeMax();
+
+  unsigned int m_vbo;
+
 	void move(float t);
 	void setV(Part* stop, float dt);
 	void sort(Part* init);

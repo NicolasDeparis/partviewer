@@ -47,3 +47,50 @@
 	<cstdio>
 	<math.h>
 
+1430765293 source:/home/deparis/opengl/freeflycamera.cpp
+	"freeflycamera.h"
+	<cmath>
+	<GL/glu.h>
+
+1430765327 /home/deparis/opengl/freeflycamera.h
+	"vector3d.h"
+	<SDL/SDL.h>
+	<map>
+	<string>
+
+1151738249 /home/deparis/opengl/vector3d.h
+
+1430772816 source:/home/deparis/opengl/main.cpp
+	<SDL/SDL.h>
+	<GL/gl.h>
+	<GL/glu.h>
+	<cstdlib>
+	"freeflycamera.h"
+	"scene.h"
+	"Part.h"
+
+1430767236 /home/deparis/opengl/scene.h
+	"Part.h"
+
+1430773147 /home/deparis/opengl/Part.h
+	<GL/gl.h>
+
+1430776053 source:/home/deparis/opengl/Part.cpp
+	"Part.h"
+	<cstdlib>
+	<cstdio>
+	<math.h>
+	<omp.h>
+
+1430776139 source:/home/deparis/opengl/scene.cpp
+	"scene.h"
+	<stdio.h>
+	<stdlib.h>
+	<GL/gl.h>
+	<GL/glu.h>
+	<math.h>
+
+1151737733 source:/home/deparis/opengl/vector3d.cpp
+	"vector3d.h"
+	<cmath>
+

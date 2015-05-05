@@ -16,11 +16,15 @@
 		<VirtualTargets>
 			<Add alias="All" targets="default;" />
 		</VirtualTargets>
+		<Compiler>
+			<Add option="-fopenmp" />
+		</Compiler>
 		<Linker>
 			<Add option="-s" />
 			<Add library="SDL" />
 			<Add library="GL" />
 			<Add library="GLU" />
+			<Add library="gomp" />
 		</Linker>
 		<Unit filename="Part.cpp" />
 		<Unit filename="freeflycamera.cpp" />
@@ -28,7 +32,6 @@
 		<Unit filename="main.cpp" />
 		<Unit filename="scene.cpp" />
 		<Unit filename="scene.h" />
-		<Unit filename="sdlglutils.h" />
 		<Unit filename="vector3d.cpp" />
 		<Unit filename="vector3d.h" />
 		<Extensions>
