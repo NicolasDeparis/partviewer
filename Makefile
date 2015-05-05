@@ -11,10 +11,10 @@ AR = ar
 LD = g++
 WINDRES = windres
 
-INC = 
-CFLAGS = -fopenmp
-RESINC = 
-LIBDIR = 
+INC =
+CFLAGS = -fopenmp -DGL_GLEXT_PROTOTYPES
+RESINC =
+LIBDIR =
 LIB = -lSDL -lGL -lGLU -lgomp
 LDFLAGS = -s
 
@@ -26,7 +26,7 @@ LIBDIR_DEFAULT = $(LIBDIR)
 LIB_DEFAULT = $(LIB)
 LDFLAGS_DEFAULT = $(LDFLAGS)
 OBJDIR_DEFAULT = .objs
-DEP_DEFAULT = 
+DEP_DEFAULT =
 OUT_DEFAULT = viewer
 
 OBJ_DEFAULT = $(OBJDIR_DEFAULT)/Part.o $(OBJDIR_DEFAULT)/freeflycamera.o $(OBJDIR_DEFAULT)/main.o $(OBJDIR_DEFAULT)/scene.o $(OBJDIR_DEFAULT)/vector3d.o
@@ -35,10 +35,10 @@ all: default
 
 clean: clean_default
 
-before_default: 
+before_default:
 	test -d $(OBJDIR_DEFAULT) || mkdir -p $(OBJDIR_DEFAULT)
 
-after_default: 
+after_default:
 
 default: before_default out_default after_default
 
@@ -60,7 +60,7 @@ $(OBJDIR_DEFAULT)/scene.o: scene.cpp
 $(OBJDIR_DEFAULT)/vector3d.o: vector3d.cpp
 	$(CXX) $(CFLAGS_DEFAULT) $(INC_DEFAULT) -c vector3d.cpp -o $(OBJDIR_DEFAULT)/vector3d.o
 
-clean_default: 
+clean_default:
 	rm -f $(OBJ_DEFAULT) $(OUT_DEFAULT)
 	rm -rf $(OBJDIR_DEFAULT)
 
