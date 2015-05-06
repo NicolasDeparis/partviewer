@@ -12,6 +12,8 @@
 #include <GL/glu.h>
 #endif
 
+
+
 Part::Part(int n){
 	alloc(n);
 }
@@ -20,47 +22,10 @@ Part::Part( char* folder, int  fileNumber, int  nproc, int s, int star){
   m_star = star;
   int npartmax = 128*128*128;// getNpart(folder,fileNumber,nproc);
 	alloc(npartmax);
-  read(folder, fileNumber, nproc);
+  //read(folder, fileNumber, nproc);
+  read_amr(folder, fileNumber);
+
  // setAge();
-
-
-
-
-/*
-  int taille = m_N*3*sizeof(float);
-
-  // Destruction d'un éventuel ancien VBO
-  if(glIsBuffer(m_vbo) == GL_TRUE)
-      glDeleteBuffers(1, &m_vbo);
-
-  // Génération de l'ID
-  glGenBuffers(1, &m_vbo);
-
-  // Verrouillage du VBO
-  glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-
-    // Allocation de la mémoire vidéo
-    glBufferData(GL_ARRAY_BUFFER, taille, 0, GL_STATIC_DRAW);
-
-    // Transfert des données
-    glBufferSubData(GL_ARRAY_BUFFER, 0, taille, m_pos);
-
-  // Déverrouillage de l'objet
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-*/
-
-
-/*
-// Génération des buffers
-glGenBuffers( 1, &m_vbo );
-
-// Buffer d'informations de vertex
-glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-glBufferData(GL_ARRAY_BUFFER, sizeof(*m_pos), m_pos, GL_STATIC_DRAW);
-//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(*m_pos), m_pos);
-*/
-
-
 }
 
 float *Part::getPos()    {	return m_pos;     }
@@ -83,6 +48,8 @@ void Part::alloc(int npartmax){
 	m_vel =  (float*)calloc(3*npartmax,sizeof(float));
 	m_idx =  (float*)calloc(npartmax,sizeof(float));
 	m_age =  (float*)calloc(npartmax,sizeof(float));
+	m_mass=  (float*)calloc(npartmax,sizeof(float));
+	m_level=  (float*)calloc(npartmax,sizeof(float));
 }
 
 void Part::read(char* folder, int  fileNumber, int  nproc){
@@ -99,7 +66,7 @@ void Part::read(char* folder, int  fileNumber, int  nproc){
 
     // sprintf(filename, "%s%05d/part/part.%05d", m_folder,m_fileNumber, m_fileNumber);
 	// printf("Reading %s\n",filename);
-    
+
 	for (int np=0; np<m_nproc; np++){
         // printf("np = %d\n",m_star);
         if(m_star) sprintf(filename, "%s%05d/star/star.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
@@ -124,11 +91,45 @@ void Part::read(char* folder, int  fileNumber, int  nproc){
             if(m_star)
                 dump = fread(&(m_age[i]),   sizeof(float), 1, f);
 
+
 			i++;
             printf("DONE\n");
 		}
 		fclose(f);
 	}
+
+	sort();
+}
+
+void Part::read_amr(char* folder, int  fileNumber){
+
+	m_folder=folder;
+	m_fileNumber=fileNumber;
+	m_nproc=0;
+
+	int dump;
+	char filename[256];
+	FILE* f = NULL;
+
+  sprintf(filename, "%s%05d/grid/alloct.%05d.field.d", m_folder,m_fileNumber, m_fileNumber);
+	printf("Reading %s\n",filename);
+
+  f = fopen(filename, "rb");
+
+  dump = fread (&m_N,sizeof(int)  ,1,f);
+  printf("Npart=%d\n",m_N);
+
+  dump = fread (&m_a,sizeof(float),1,f);
+
+  for(int i=0; i<m_N; i++){
+    dump = fread(&(m_pos[3*i]),sizeof(float), 3, f);
+    dump = fread(&(m_level[i]),sizeof(float), 1, f);
+    dump = fread(&(m_mass[i] ),sizeof(float), 1, f);
+  }
+
+  fclose(f);
+  printf("Read OK\n");
+
 }
 
 int Part::getNpart(char* folder, int  fileNumber, int  nproc){
@@ -242,32 +243,37 @@ void Part::interpPos(Part* start, float *t, int step, int time_max){
 }
 
 
-void Part::sort(Part* init){
-  m_N = init->getN();
-  #pragma omp parallel for
-  for (int i=0;i<init->getN();i++){
+void Part::sort(){
 
-      int id2sort = init->getIdx(i);
+  static float *idx_tmp =  (float*)calloc(m_N,sizeof(float));
+  static float *pos_tmp =  (float*)calloc(3*m_N,sizeof(float));
+  static float *age_tmp =  (float*)calloc(m_N,sizeof(float));
 
-      m_idx[id2sort]=init->getIdx(i);
-      m_pos[3*id2sort+0]=init->getX(i);
-      m_pos[3*id2sort+1]=init->getY(i);
-      m_pos[3*id2sort+2]=init->getZ(i);
-
-      m_age[id2sort]=init->getAge(i);
-	}
-}
-
-void Part::copy(Part* init){
-  m_N = init->getN();
   #pragma omp parallel for
   for (int i=0;i<m_N;i++){
-      m_idx[i]  = (float)init->getIdx(i);
-      m_pos[3*i+0]    = init->getX(i);
-      m_pos[3*i+1]    = init->getY(i);
-      m_pos[3*i+2]    = init->getZ(i);
-      //m_age[i]  = init.getAge(i);
+
+      int id2sort = m_idx[i];
+
+      idx_tmp[id2sort]=m_idx[i];
+
+      pos_tmp[3*id2sort+0]=m_pos[3*i+0];
+      pos_tmp[3*id2sort+1]=m_pos[3*i+1];
+      pos_tmp[3*id2sort+2]=m_pos[3*i+2];
+
+      age_tmp[id2sort]=m_age[i];
 	}
+
+
+// copy
+
+  #pragma omp parallel for
+  for (int i=0;i<m_N;i++){
+    m_idx[i]  = idx_tmp[i];
+  }
+	#pragma omp parallel for
+  for (int i=0;i<3*m_N;i++){
+    m_pos[i]  = pos_tmp[i];
+  }
 }
 
 int Part::append(Part* next, int cur_part, float t){
