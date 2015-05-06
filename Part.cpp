@@ -7,6 +7,8 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
+
+
 Part::Part(int n){
 	alloc(n);
 }
@@ -15,47 +17,10 @@ Part::Part( char* folder, int  fileNumber, int  nproc, int s, int star){
   m_star = star;
   int npartmax = 128*128*128;// getNpart(folder,fileNumber,nproc);
 	alloc(npartmax);
-  read(folder, fileNumber, nproc);
+  //read(folder, fileNumber, nproc);
+  read_amr(folder, fileNumber);
+
  // setAge();
-
-
-
-
-/*
-  int taille = m_N*3*sizeof(float);
-
-  // Destruction d'un éventuel ancien VBO
-  if(glIsBuffer(m_vbo) == GL_TRUE)
-      glDeleteBuffers(1, &m_vbo);
-
-  // Génération de l'ID
-  glGenBuffers(1, &m_vbo);
-
-  // Verrouillage du VBO
-  glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-
-    // Allocation de la mémoire vidéo
-    glBufferData(GL_ARRAY_BUFFER, taille, 0, GL_STATIC_DRAW);
-
-    // Transfert des données
-    glBufferSubData(GL_ARRAY_BUFFER, 0, taille, m_pos);
-
-  // Déverrouillage de l'objet
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-*/
-
-
-/*
-// Génération des buffers
-glGenBuffers( 1, &m_vbo );
-
-// Buffer d'informations de vertex
-glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-glBufferData(GL_ARRAY_BUFFER, sizeof(*m_pos), m_pos, GL_STATIC_DRAW);
-//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(*m_pos), m_pos);
-*/
-
-
 }
 
 float *Part::getPos()    {	return m_pos;     }
@@ -78,6 +43,8 @@ void Part::alloc(int npartmax){
 	m_vel =  (float*)calloc(3*npartmax,sizeof(float));
 	m_idx =  (float*)calloc(npartmax,sizeof(float));
 	m_age =  (float*)calloc(npartmax,sizeof(float));
+	m_mass=  (float*)calloc(npartmax,sizeof(float));
+	m_level=  (float*)calloc(npartmax,sizeof(float));
 }
 
 void Part::read(char* folder, int  fileNumber, int  nproc){
@@ -92,8 +59,8 @@ void Part::read(char* folder, int  fileNumber, int  nproc){
 	char filename[256];
 	FILE* f = NULL;
 
-  //sprintf(filename, "%s%05d/part/part.%05d", m_folder,m_fileNumber, m_fileNumber);
-	//printf("Reading %s\n",filename);
+  sprintf(filename, "%s%05d/part/part.%05d", m_folder,m_fileNumber, m_fileNumber);
+	printf("Reading %s\n",filename);
 
 	for (int np=0; np<m_nproc; np++){
 if(m_star) sprintf(filename, "%s%05d/star/star.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
@@ -123,6 +90,35 @@ if(m_star)
 		}
 		fclose(f);
 	}
+}
+
+void Part::read_amr(char* folder, int  fileNumber){
+
+	m_folder=folder;
+	m_fileNumber=fileNumber;
+	m_nproc=0;
+
+	int dump;
+	char filename[256];
+	FILE* f = NULL;
+
+  sprintf(filename, "%s%05d/grid/alloct.%05d.field.d", m_folder,m_fileNumber, m_fileNumber);
+	printf("Reading %s\n",filename);
+
+  f = fopen(filename, "rb");
+
+  dump = fread (&m_N,sizeof(int)  ,1,f);
+  printf("Npart=%d\n",m_N);
+
+  dump = fread (&m_a,sizeof(float),1,f);
+
+  for(int i=0; i<m_N; i++){
+    dump = fread(&(m_pos[3*i]),sizeof(float), 3, f);
+    dump = fread(&(m_level[i]),sizeof(float), 1, f);
+    dump = fread(&(m_mass[i] ),sizeof(float), 1, f);
+  }
+
+  fclose(f);
 }
 
 int Part::getNpart(char* folder, int  fileNumber, int  nproc){
@@ -158,6 +154,8 @@ void Part::setAge(){
 //		printf("i %d\t idx %d \n", i, m_idx[i]);
 	}
 }
+
+
 
 
 void Part::move(float dt){

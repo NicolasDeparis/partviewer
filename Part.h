@@ -19,6 +19,8 @@ private:
 
 	float *m_idx;
 	float *m_age;
+	float *m_mass;
+	float *m_level;
 
 
 
@@ -31,6 +33,8 @@ public:
 	Part(char* folder, int  fileNumber, int  nproc, int scale, int star);
 
 	void read(char* folder, int  fileNumber, int  nproc);
+	void read_amr(char* folder, int  fileNumber);
+
 
 	int   getN();
 	float getA();

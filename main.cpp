@@ -1,9 +1,12 @@
+#include <cstdlib>
 #include <SDL/SDL.h>
-
 #include <GL/gl.h>
 #include <GL/glu.h>
-//#include <GL/glew.h>
-#include <cstdlib>
+
+#ifdef CUDA
+#include <cuda_runtime.h>
+#include <cuda_gl_interop.h>
+#endif // CUDA
 
 #include "freeflycamera.h"
 #include "scene.h"
@@ -13,13 +16,13 @@
 #define LARGEUR_FENETRE 800
 #define HAUTEUR_FENETRE 600
 
-
 const int anim_time = 90;
-const float scale = 128;
+const float scale = 256;
 
 const int star = 0;
 const int  nproc = 64;
-char folder[128] = "/home/deparis/data/FF_cond150/data/";
+//char folder[128] = "/home/deparis/data/FF_cond150/data/";
+char folder[128] = "/home/deparis/data/L3_cond25/data/";
 const int nstep = 1; int num[nstep]={10};
 //const int nstep = 2; int num[nstep]={0,10};
 //const int nstep = 6; int num[nstep]={0,2,4,6,8,10};
@@ -74,10 +77,11 @@ int main(int argc, char *argv[]){
 //      for (int ii=0;ii<100; ii++) printf("id %d\n",part_current->getIdx(ii));
  //     abort();
 
+/*
       Part  part_tmp(n*n*n);
       part_tmp.sort(part_current);
       part_current->copy(&part_tmp);
-
+*/
       all_part[i]=part_current;
 
       t_yr[i]= a2t(part_current->getA());
@@ -91,7 +95,18 @@ int main(int argc, char *argv[]){
     }
 
 
+    GLuint vbo;
+    glGenBuffers( 1, &vbo);
 
+    int size = 3* n*n*n * sizeof(float);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+      glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+#ifdef CUDA
+    cudaGLRegisterBufferObject( vbo );
+    cudaMalloc((void **)&vbo,size);
+#endif // CUDA
 ////////////////////////////////////////////////////////////////////////////////////////
     printf("Ok let's GO\n");
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -119,8 +134,7 @@ int main(int argc, char *argv[]){
     last_time = SDL_GetTicks();
     start_time = SDL_GetTicks();
 
-    GLuint vbo;
-    glGenBuffers( 1, &vbo);
+
 
     int current_step=0;
     for (;;)
@@ -138,12 +152,6 @@ int main(int argc, char *argv[]){
           part_current = all_part[current_step];
           part_next = all_part[current_step+1];
           current_step++;
-
-          int size = 3* part_current->getN() * sizeof(float);
-          glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glBufferData(GL_ARRAY_BUFFER, size, part_current->getPos(), GL_STATIC_DRAW);
-          glBindBuffer(GL_ARRAY_BUFFER, 0);
-
         }
 
           float cur_t = t_yr[current_step]+total_time*dt[current_step];
@@ -210,6 +218,11 @@ void DrawGL(Part *parts, float *data, GLuint vbo)
     glLoadIdentity( );
 
     camera->look();
+
+          int size = 3* parts->getN() * sizeof(float);
+          glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glBufferData(GL_ARRAY_BUFFER, size, parts->getPos(), GL_DYNAMIC_DRAW);
+          glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     render(parts, vbo);
 
