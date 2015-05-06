@@ -12,11 +12,13 @@ LD = g++
 WINDRES = windres
 
 INC =
-CFLAGS = -fopenmp -DGL_GLEXT_PROTOTYPES
+CFLAGS = -fopenmp -DGL_GLEXT_PROTOTYPES -I/Library/Frameworks/SDL.framework/Headers
 RESINC =
 LIBDIR =
-LIB = -lSDL -lGL -lGLU -lgomp
-LDFLAGS = -s
+# LIB = -lSDL `sdl-config --cflags --libs` -framework Cocoa -lGL -lGLU -lgomp
+LIB = -framework SDL -framework OpenGl -framework GLUT -framework Cocoa -v -lc++
+# -macosx_version_min 10.9.0
+LDFLAGS = 
 
 INC_DEFAULT = $(INC)
 CFLAGS_DEFAULT = $(CFLAGS)

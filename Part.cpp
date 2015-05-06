@@ -3,9 +3,14 @@
 #include <cstdlib>
 #include <cstdio>
 #include <math.h>
-#include <omp.h>
+// #include <omp.h>
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#else
 #include <GL/gl.h>
 #include <GL/glu.h>
+#endif
 
 Part::Part(int n){
 	alloc(n);
@@ -92,15 +97,15 @@ void Part::read(char* folder, int  fileNumber, int  nproc){
 	char filename[256];
 	FILE* f = NULL;
 
-  //sprintf(filename, "%s%05d/part/part.%05d", m_folder,m_fileNumber, m_fileNumber);
-	//printf("Reading %s\n",filename);
-
+    // sprintf(filename, "%s%05d/part/part.%05d", m_folder,m_fileNumber, m_fileNumber);
+	// printf("Reading %s\n",filename);
+    
 	for (int np=0; np<m_nproc; np++){
-if(m_star) sprintf(filename, "%s%05d/star/star.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
-else       sprintf(filename, "%s%05d/part/part.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
+        // printf("np = %d\n",m_star);
+        if(m_star) sprintf(filename, "%s%05d/star/star.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
+        else       sprintf(filename, "%s%05d/part/part.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
 
-
-  //  printf("Reading %s\n",filename);
+        // printf("Reading %s\n",filename);
 		f = fopen(filename, "rb");
 
 		dump = fread (&nloc, sizeof(int)  ,1,f);
@@ -116,10 +121,11 @@ else       sprintf(filename, "%s%05d/part/part.%05d.p%05d", m_folder,m_fileNumbe
 			dump = fread(&mass,         sizeof(float), 1, f);
 			dump = fread(&epot,         sizeof(float), 1, f);
 			dump = fread(&ekin,         sizeof(float), 1, f);
-if(m_star)
-			dump = fread(&(m_age[i]),   sizeof(float), 1, f);
+            if(m_star)
+                dump = fread(&(m_age[i]),   sizeof(float), 1, f);
 
 			i++;
+            printf("DONE\n");
 		}
 		fclose(f);
 	}

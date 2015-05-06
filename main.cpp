@@ -1,7 +1,12 @@
-#include <SDL/SDL.h>
+#include <SDL/SDL_opengl.h>
 
-#include <GL/gl.h>
-#include <GL/glu.h>
+// #ifdef __APPLE__
+// #include <OpenGL/gl.h>
+// #include <OpenGL/glu.h>
+// #else
+// #include <GL/gl.h>
+// #include <GL/glu.h>
+// #endif
 //#include <GL/glew.h>
 #include <cstdlib>
 
@@ -19,7 +24,7 @@ const float scale = 128;
 
 const int star = 0;
 const int  nproc = 64;
-char folder[128] = "/home/deparis/data/FF_cond150/data/";
+char folder[128] = "/Users/gillet/partViewerMac/partViewerMac/";
 const int nstep = 1; int num[nstep]={10};
 //const int nstep = 2; int num[nstep]={0,10};
 //const int nstep = 6; int num[nstep]={0,2,4,6,8,10};
