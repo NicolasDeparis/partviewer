@@ -65,8 +65,10 @@ void Part::read(char* folder, int  fileNumber, int  nproc){
 	printf("Reading %s\n",filename);
 
 	for (int np=0; np<m_nproc; np++){
-if(m_star) sprintf(filename, "%s%05d/star/star.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
-else       sprintf(filename, "%s%05d/part/part.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
+    if(m_star)
+      sprintf(filename, "%s%05d/star/star.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
+    else
+      sprintf(filename, "%s%05d/part/part.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
 
 
   //  printf("Reading %s\n",filename);

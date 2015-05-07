@@ -153,7 +153,7 @@ int main(int argc, char *argv[]){
         }
 
           float cur_t = t_yr[current_step]+total_time*dt[current_step];
-       // Npart[current_step]+=part_current->append(part_next, Npart[current_step], cur_t);
+          Npart[current_step]+=part_current->append(part_next, Npart[current_step], cur_t);
       //  printf("t=%f npart=%d currentN=%d\n",t_yr, Npart, part_current->getN());
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -197,7 +197,7 @@ int main(int argc, char *argv[]){
           part_current->move(elapsed_time);
         }
 
-        DrawGL(part_current, data, vbo);
+        DrawGL(part_current, vbo);
 
         stop_time = SDL_GetTicks();
         if ((stop_time - last_time) < time_per_frame){
@@ -208,7 +208,7 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-void DrawGL(Part *parts, float *data, GLuint vbo)
+void DrawGL(Part *parts, GLuint vbo)
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
