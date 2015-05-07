@@ -1,10 +1,13 @@
 #include "scene.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include <math.h>
+#include <SDL/SDL_opengl.h>
+
+//#include <GL/gl.h>
+//#include <GL/glu.h>
+
 
 
 

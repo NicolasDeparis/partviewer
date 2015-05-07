@@ -4,8 +4,10 @@
 #include <cstdio>
 #include <math.h>
 #include <omp.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include <SDL/SDL_opengl.h>
+
+//#include <GL/gl.h>
+//#include <GL/glu.h>
 
 
 
@@ -17,8 +19,8 @@ Part::Part( char* folder, int  fileNumber, int  nproc, int s, int star){
   m_star = star;
   int npartmax = 128*128*128;// getNpart(folder,fileNumber,nproc);
 	alloc(npartmax);
-  //read(folder, fileNumber, nproc);
-  read_amr(folder, fileNumber);
+  read(folder, fileNumber, nproc);
+  //read_amr(folder, fileNumber);
 
  // setAge();
 }

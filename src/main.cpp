@@ -1,6 +1,7 @@
 #include <cstdlib>
 
 #include <SDL/SDL_opengl.h>
+
 //#include <SDL/SDL.h>
 //#include <GL/gl.h>
 //#include <GL/glu.h>
@@ -96,7 +97,7 @@ int main(int argc, char *argv[]){
 
     int size = 3* npartmax*npartmax*npartmax * sizeof(float);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-      glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_DYNAMIC_DRAW);
+      glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 #ifdef CUDA
@@ -218,7 +219,7 @@ void DrawGL(Part *parts, float *data, GLuint vbo)
 
           int size = 3* parts->getN() * sizeof(float);
           glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glBufferData(GL_ARRAY_BUFFER, size, parts->getPos(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, size, parts->getPos(), GL_STATIC_DRAW);
           glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     render(parts, vbo);
