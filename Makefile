@@ -1,11 +1,11 @@
 
-ARCH = GPU
-
 C_OBJS = 	main.o\
 					Part.o\
 					freeflycamera.o\
 					scene.o\
-					vector3d.o
+					vector3d.o\
+					physic.o\
+					kernel.o
 
 WORKDIR = `pwd`
 
@@ -14,18 +14,12 @@ CXX = g++
 NVCC = nvcc
 
 AR = ar
-LD = g++
+LD = nvcc
 WINDRES = windres
 
 INC =
 
-CFLAGS = -DGL_GLEXT_PROTOTYPES
-
-ifeq ($(ARCH),GPU)
-	$(CFLAGS) = $(CFLAGS) -DCUDA
-else
-	$(CFLAGS) = $(CFLAGS) -fopenmp
-endif
+CFLAGS = -DGL_GLEXT_PROTOTYPES -DCUDA
 
 RESINC =
 LIBDIR =
@@ -52,17 +46,6 @@ clean: clean_default
 
 before_default:
 	test -d $(OBJDIR_DEFAULT) || mkdir -p $(OBJDIR_DEFAULT)
-ifeq ($(ARCH),GPU)
-	echo "GPU"
-else
-	echo "CPU"
-endif
-ifeq ($(ARCH),GPU)
-	$(CFLAGS) = $(CFLAGS) -DCUDA
-else
-	$(CFLAGS) = $(CFLAGS) -fopenmp
-endif
-
 
 after_default:
 
@@ -75,11 +58,9 @@ out_default: before_default $(OBJ_DEFAULT) $(DEP_DEFAULT)
 $(OBJDIR_DEFAULT)/%.o: $(SRCDIR_DEFAULT)/%.cpp
 	$(CXX) $(CFLAGS_DEFAULT) $(INC_DEFAULT) -c $< -o $@
 
-
-ifeq ($(ARCH),GPU)
-$(OBJDIR_DEFAULT)/%.o: $(SRCDIR_DEFAULT)/%.cu
+$(OBJDIR_DEFAULT)/%.o: $(SRCDIR_DEFAULT)/kernel.cu
 	$(NVCC) $(CFLAGS_DEFAULT) $(INC_DEFAULT) -c $< -o $@
-endif
+
 
 clean_default:
 	rm -f $(OBJ_DEFAULT) $(OUT_DEFAULT)

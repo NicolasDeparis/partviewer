@@ -26,14 +26,20 @@
 			<Add library="GLU" />
 			<Add library="gomp" />
 		</Linker>
-		<Unit filename="Part.cpp" />
-		<Unit filename="freeflycamera.cpp" />
-		<Unit filename="freeflycamera.h" />
-		<Unit filename="main.cpp" />
-		<Unit filename="scene.cpp" />
-		<Unit filename="scene.h" />
-		<Unit filename="vector3d.cpp" />
-		<Unit filename="vector3d.h" />
+		<Unit filename="src/Part.cpp" />
+		<Unit filename="src/Part.cu" />
+		<Unit filename="src/Part.h" />
+		<Unit filename="src/freeflycamera.cpp" />
+		<Unit filename="src/freeflycamera.h" />
+		<Unit filename="src/main.cpp" />
+		<Unit filename="src/param.cpp" />
+		<Unit filename="src/param.h" />
+		<Unit filename="src/physic.cpp" />
+		<Unit filename="src/physic.h" />
+		<Unit filename="src/scene.cpp" />
+		<Unit filename="src/scene.h" />
+		<Unit filename="src/vector3d.cpp" />
+		<Unit filename="src/vector3d.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

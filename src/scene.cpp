@@ -1,15 +1,8 @@
 #include "scene.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <SDL/SDL_opengl.h>
-
-//#include <GL/gl.h>
-//#include <GL/glu.h>
-
-
-
 
 void render_cube(){
   glBegin(GL_LINES);
@@ -30,26 +23,32 @@ void render_cube(){
   glEnd();
 }
 
-void render_part(Part *part, GLuint vbo){
+void render_part( GLuint* vbo, int N){
 
+  glEnable (GL_BLEND);
+  glBlendFunc (GL_SRC_ALPHA, GL_DST_ALPHA	);
 
-glBindBuffer(GL_ARRAY_BUFFER, vbo);
-glEnableClientState( GL_VERTEX_ARRAY );
+  glEnableClientState( GL_VERTEX_ARRAY );
+  glEnableClientState( GL_COLOR_ARRAY );
 
+  glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
     glVertexPointer(3, GL_FLOAT, 0, NULL);
-    glDrawArrays(GL_POINTS, 0, part->getN() );
 
-glDisableClientState( GL_VERTEX_ARRAY );
-glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    glColorPointer(4, GL_FLOAT, 0, NULL);
 
+  glDrawArrays(GL_POINTS, 0, N);
 
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  glDisableClientState( GL_COLOR_ARRAY );
+  glDisableClientState( GL_VERTEX_ARRAY );
+  glDisable(GL_BLEND);
 }
 
-void render(Part * part, GLuint vbo){
-
+void render(GLuint *vbo, int N){
   render_cube();
-  render_part(part, vbo);
-
+  render_part(vbo, N);
   glFlush();
 }
 

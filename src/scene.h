@@ -1,9 +1,8 @@
 #ifndef SCENE_H
 #define SCENE_H
-#include <GL/gl.h>
 
-#include "Part.h"
+#include <SDL/SDL_opengl.h>
 
-void render(Part * parts, GLuint vbo);
+void render(GLuint *vbo, int N);
 
 #endif //SCENE_H
