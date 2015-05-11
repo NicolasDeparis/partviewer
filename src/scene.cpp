@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
 #include <math.h>
 
 
@@ -34,7 +34,9 @@ glBindBuffer(GL_ARRAY_BUFFER, vbo);
 glEnableClientState( GL_VERTEX_ARRAY );
 
     glVertexPointer(3, GL_FLOAT, 0, NULL);
-    glDrawArrays(GL_POINTS, 0, part->getN() );
+    // glVertexPointer(3, GL_FLOAT, 0, part->getPos());
+    // printf("N part = %d\n",part->getN() );
+    glDrawArrays(GL_POINTS, 0, part->getN());
 
 glDisableClientState( GL_VERTEX_ARRAY );
 glBindBuffer(GL_ARRAY_BUFFER, 0);

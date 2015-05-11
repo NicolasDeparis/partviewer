@@ -1,4 +1,9 @@
-#include <SDL/SDL_opengl.h>
+#define GL_GLEXT_PROTOTYPES
+
+#include <SDL/SDL.h>
+
+#include <OpenGL/OpenGL.h>
+#include <GLUT/GLUT.h>
 
 #include <cstdlib>
 
@@ -23,7 +28,7 @@ const float scale = 128;
 const int npartmax=256;
 
 const int star = 0;
-const int  nproc = 64;
+const int  nproc = 128;
 char folder[128] = "/Users/gillet/partViewerMac/partViewerMac/";
 
 const int nstep = 1; int num[nstep]={10};
@@ -74,8 +79,13 @@ int main(int argc, char *argv[]){
 
     for(int i=0; i<nstep; i++){
       fileNumber = num[i];
-      Part* part_current = new Part(folder, fileNumber, nproc, scale, star);
-//      for (int ii=0;ii<100; ii++) printf("id %d\n",part_current->getIdx(ii));
+        
+        Part* part_amr = new Part(folder, fileNumber, nproc,scale, star);
+        Part* part_current = new Part( part_amr, scale*scale*scale );
+        
+        // Part* part_current = new Part(folder, fileNumber, nproc,scale, star);
+        
+        // for (int ii=0;ii<100; ii++) printf("id %d\n",part_current->getIdx(ii));
 
       all_part[i]=part_current;
 
@@ -88,15 +98,18 @@ int main(int argc, char *argv[]){
         all_part[i]->setV(all_part[i+1], time_max);
     //    all_part[i+1]->interpPos(all_part[i], t_yr, i, time_max);
     }
-
-
+    
+    
+    // init_gl();
+    /*
     GLuint vbo;
     glGenBuffers( 1, &vbo);
-
     int size = 3* npartmax*npartmax*npartmax * sizeof(float);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-      glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    */
+
 
 #ifdef CUDA
     cudaGLRegisterBufferObject( vbo );
@@ -121,9 +134,17 @@ int main(int argc, char *argv[]){
 
     SDL_WM_SetCaption("Particle Viewer", NULL);
     SDL_SetVideoMode(width, height, 32, SDL_OPENGL);
-//    initFullScreen(&width,&height);
+    //    initFullScreen(&width,&height);
 
     init_gl();
+    
+    GLuint vbo;
+    glGenBuffers( 1, &vbo);
+    int size = 3* npartmax*npartmax*npartmax * sizeof(float);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    
 
     camera = new FreeFlyCamera(Vector3D(0.5,0.5,0.5), scale);
 
@@ -158,6 +179,11 @@ int main(int argc, char *argv[]){
 
       //  start_time = SDL_GetTicks();
 
+        int sizeP = 3* part_current->getN() * sizeof(float);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glBufferData(GL_ARRAY_BUFFER, sizeP, part_current->getPos(), GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        
         while(SDL_PollEvent(&event))
         {
             switch(event.type)

@@ -1,4 +1,5 @@
 #include "Part.h"
+#include "tirage.h"
 
 #include <cstdlib>
 #include <cstdio>
@@ -20,7 +21,7 @@ Part::Part(int n){
 
 Part::Part( char* folder, int  fileNumber, int  nproc, int s, int star){
   m_star = star;
-  int npartmax = 128*128*128;// getNpart(folder,fileNumber,nproc);
+  int npartmax = 8*128*128*128;// getNpart(folder,fileNumber,nproc);
 	alloc(npartmax);
   //read(folder, fileNumber, nproc);
   read_amr(folder, fileNumber);
@@ -28,8 +29,22 @@ Part::Part( char* folder, int  fileNumber, int  nproc, int s, int star){
  // setAge();
 }
 
+Part::Part( Part* AMR, int NPartTirage ){
+    alloc(NPartTirage);
+    int Ngrid = 512;
+    float rhoMin = 0;
+    
+    //tirage_pos_1D( AMR->getPos(), AMR->getN(), 0, AMR->getMass(), AMR->getLev(), Ngrid, NPartTirage, m_pos, 210289 );
+    //tirage_pos_1D( AMR->getPos(), AMR->getN(), 1, AMR->getMass(), AMR->getLev(), Ngrid, NPartTirage, m_pos, 21028);
+    //tirage_pos_1D( AMR->getPos(), AMR->getN(), 2, AMR->getMass(), AMR->getLev(), Ngrid, NPartTirage, m_pos, 2102 );
+    
+    tirage_SFR(AMR->getPos(), AMR->getN(), AMR->getMass(), AMR->getLev(), NPartTirage, rhoMin, m_pos, 210289);
+}
+
 float *Part::getPos()    {	return m_pos;     }
 float *Part::getVel()    {	return m_vel;     }
+float *Part::getMass()   {	return m_mass;    }
+float *Part::getLev()   {	return m_level;   }
 int   Part::getN()       {	return m_N;     }
 float Part::getA()       {	return m_a;     }
 float Part::getT()       {	return m_t;     }
@@ -50,6 +65,7 @@ void Part::alloc(int npartmax){
 	m_age =  (float*)calloc(npartmax,sizeof(float));
 	m_mass=  (float*)calloc(npartmax,sizeof(float));
 	m_level=  (float*)calloc(npartmax,sizeof(float));
+    m_N = npartmax;
 }
 
 void Part::read(char* folder, int  fileNumber, int  nproc){
@@ -93,7 +109,6 @@ void Part::read(char* folder, int  fileNumber, int  nproc){
 
 
 			i++;
-            printf("DONE\n");
 		}
 		fclose(f);
 	}

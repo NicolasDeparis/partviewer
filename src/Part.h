@@ -26,11 +26,12 @@ private:
 
 	void alloc(int npartmax);
 	void setAge();
-  int getNpart(char* folder, int  fileNumber, int  nproc);
+    int getNpart(char* folder, int  fileNumber, int  nproc);
 
 public:
 	Part(int N);
 	Part(char* folder, int  fileNumber, int  nproc, int scale, int star);
+    Part( Part* AMR, int Npart );
 
 	void read(char* folder, int  fileNumber, int  nproc);
 	void read_amr(char* folder, int  fileNumber);
@@ -50,6 +51,8 @@ public:
 
 	float *getPos();
 	float *getVel();
+    float *getMass();
+    float *getLev();
 
 	float getAgeMax();
 
