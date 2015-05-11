@@ -16,9 +16,9 @@ Part::Part( char* folder, int  fileNumber, int  nproc, int star, int n, int type
   m_star = star;
 	m_type = type;
 
-  GLuint m_vbo[2];
 
 	alloc(n);
+
 	switch(type){
     case 0:
       EMMA_read_part(folder, fileNumber, nproc);
@@ -51,8 +51,10 @@ float Part::getVY (int i){	return m_vel[3*i+1];  }
 float Part::getVZ (int i){	return m_vel[3*i+2];  }
 float Part::getAge(int i){	return m_age[i];}
 int   Part::getIdx(int i){	return (int)m_idx[i];}
+
 float Part::getAgeMax(){	return m_agemax;}
-GLuint Part::getVbo(){    return m_vbo;}
+
+GLuint* Part::getVbo(){    return m_vbo ;}
 
 void Part::alloc(const int n){
   unsigned int mem = 0;
@@ -68,9 +70,25 @@ void Part::alloc(const int n){
   //for(int i=0;i<4*n;i++){m_color[i]=1;}
 
 	printf("Allocating %d Mo\n",mem/8/1024/1024);
+}
 
-  glGenBuffers(2,&m_vbo);
+void Part::alloc_GPU(GLuint *vbo, int n){
 
+//  printf("npartmax from GPU %d\n",NPARTMAX);
+
+  glGenBuffers(2,&vbo[0]);
+//  printf("npartmax from GPU %d\n vbo0=%d \n vbo1=%d\n",n, m_vbo[0], m_vbo[1]);
+
+// printf("vbo=%d vbo=%d N=%d\n",vbo[0], vbo[1], n );
+
+  int size;
+  glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+    size = 3* n * sizeof(float);
+    glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    size = 4* n * sizeof(float);
+    glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 Part::~Part(){
@@ -186,12 +204,27 @@ void Part::setColors(){
   }
 */
 
-  for(int i=0; i<m_N; i++){
-    float vel = sqrt(pow(m_vel[3*i+0],2)+pow(m_vel[3*i+1],2)+pow(m_vel[3*i+2],2));
-    m_color[i*4+0] = 1;//m_vel[3*i+0];
-    m_color[i*4+1] = 1;//m_vel[3*i+1];
-    m_color[i*4+2] = 1;//m_vel[3*i+2];
-    m_color[i*4+3] = (m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
+  switch (m_type){
+  case 0:
+    for(int i=0; i<m_N; i++){
+      //float vel = sqrt(pow(m_vel[3*i+0],2)+pow(m_vel[3*i+1],2)+pow(m_vel[3*i+2],2));
+      m_color[i*4+0] = 1;//m_vel[3*i+0];
+      m_color[i*4+1] = 1;//m_vel[3*i+1];
+      m_color[i*4+2] = 1;//m_vel[3*i+2];
+      m_color[i*4+3] = 0.5;//(m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
+    }
+  break;
+
+  case 1:
+    for(int i=0; i<m_N; i++){
+      //float vel = sqrt(pow(m_vel[3*i+0],2)+pow(m_vel[3*i+1],2)+pow(m_vel[3*i+2],2));
+      m_color[i*4+0] = 1;//m_vel[3*i+0];
+      m_color[i*4+1] = 0;//m_vel[3*i+1];
+      m_color[i*4+2] = 0;//m_vel[3*i+2];
+      m_color[i*4+3] = m_mass[i];//(m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
+    }
+  break;
+
   }
 }
 

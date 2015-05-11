@@ -27,8 +27,11 @@ private:
 	float *m_mass;
 	float *m_level;
 	float *m_color;
+	GLuint m_vbo[2];
 
 	void alloc(int n);
+
+
 	void setAge();
   int getNpart(char* folder, int  fileNumber, int  nproc);
 
@@ -39,6 +42,8 @@ public:
 
 	void EMMA_read_part(char* folder, int  fileNumber, int  nproc);
 	void EMMA_read_amr(char* folder, int  fileNumber);
+
+	void alloc_GPU(GLuint* vbo, int n);
 
 	int   getN();
 	float getA();
@@ -52,7 +57,7 @@ public:
 	float getVZ(int i);
 	int   getIdx(int i);
 	float getAge(int i);
-	GLuint getVbo();
+	GLuint* getVbo();
 
 	float *getPos();
 	float *getVel();
@@ -61,7 +66,7 @@ public:
 
 	float getAgeMax();
 
-  unsigned int m_vbo;
+
 
 	void move(float t);
 	void sort();

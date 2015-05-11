@@ -3,6 +3,6 @@
 
 #include <SDL/SDL_opengl.h>
 
-void render(GLuint *vbo, int N);
+void render(GLuint *vbo, int* N);
 
 #endif //SCENE_H

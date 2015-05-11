@@ -23,7 +23,9 @@ void render_cube(){
   glEnd();
 }
 
-void render_part( GLuint* vbo, int N){
+void render_part(GLuint* vbo, int N){
+
+ // printf("N=%d\n",N);
 
   glEnable (GL_BLEND);
   glBlendFunc (GL_SRC_ALPHA, GL_DST_ALPHA	);
@@ -46,9 +48,10 @@ void render_part( GLuint* vbo, int N){
   glDisable(GL_BLEND);
 }
 
-void render(GLuint *vbo, int N){
+void render(GLuint *vbo, int *N){
   render_cube();
-  render_part(vbo, N);
+  render_part(&vbo[0], N[0]);
+  render_part(&vbo[2], N[1]);
   glFlush();
 }
 
