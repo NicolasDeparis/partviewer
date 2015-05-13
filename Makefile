@@ -5,12 +5,13 @@ C_OBJS = 	main.o\
 					scene.o\
 					vector3d.o\
 					physic.o\
-					kernel.o
+					kernel.o\
+					tirage.o
 
 WORKDIR = `pwd`
 
 CC = gcc
-CXX = g++
+CXX = nvcc
 NVCC = nvcc
 
 AR = ar
@@ -19,11 +20,17 @@ WINDRES = windres
 
 INC =
 
+#CFLAGS = -fopenmp -DGL_GLEXT_PROTOTYPES -I/Library/Frameworks/SDL.framework/Headers
 CFLAGS = -DGL_GLEXT_PROTOTYPES -DCUDA
 
 RESINC =
 LIBDIR =
-LIB = -lSDL -lGL -lGLU -lgomp
+# LIB = -lSDL `sdl-config --cflags --libs` -framework Cocoa -lGL -lGLU -lgomp
+#LIB = -framework SDL -framework OpenGl -framework GLUT -framework Cocoa -v -lc++
+# -macosx_version_min 10.9.0
+
+LIB = -lSDL -lGL -lGLU -lgomp -lgsl -lgslcblas
+
 LDFLAGS =
 
 INC_DEFAULT = $(INC)

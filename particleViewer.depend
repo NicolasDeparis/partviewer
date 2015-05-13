@@ -98,5 +98,20 @@
 	<math.h>
 	"Part.h"
 
-1431264186 /home/deparis/opengl/src/Part.h
+1431507990 /home/deparis/opengl/src/Part.h
+	<SDL/SDL_opengl.h>
+
+1431348534 source:/home/deparis/opengl/src/freeflycamera.cpp
+	"freeflycamera.h"
+	<cmath>
+	<OpenGL/glu.h>
+	<GL/glu.h>
+
+1430765327 /home/deparis/opengl/src/freeflycamera.h
+	"vector3d.h"
+	<SDL/SDL.h>
+	<map>
+	<string>
+
+1151738249 /home/deparis/opengl/src/vector3d.h
 

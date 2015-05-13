@@ -10,7 +10,6 @@
 #include "scene.h"
 #include "Part.h"
 #include "physic.h"
-
 #include "param.h"
 
 void DrawGL(GLuint *vbo, int *N);
@@ -20,8 +19,7 @@ FreeFlyCamera * camera;
 void stop()
 {
     delete camera;
-    SDL_Quit();
-}
+    SDL_Quit();}
 
 void init_gl(void)
 {
@@ -32,14 +30,19 @@ void init_gl(void)
     glLoadIdentity();
     gluPerspective(70,(double)width/height,0.001,1000);
 
-//    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_DEPTH_TEST);
     //glEnable(GL_POINT_SMOOTH);
-
 }
 
 int main(int argc, char *argv[]){
 
+////////////////////////////////////////////////////////////////////////////////////////
+    printf("Initializing\n");
+////////////////////////////////////////////////////////////////////////////////////////
+
 // init GL
+
+
 
     SDL_Event event;
     const Uint32 time_per_frame = 1000/FPS;
@@ -57,40 +60,58 @@ int main(int argc, char *argv[]){
 
     SDL_Surface* surface = SDL_SetVideoMode(width, height, 32, SDL_OPENGL );
 
-//    initFullScreen(&width,&height);
-
     init_gl();
 
 
+
+
 #ifdef CUDA
+    cudaGLSetGLDevice(0);
     printf("CUDA enable\n");
 #endif // CUDA
 
     int  fileNumber;
     int time_max = ANIME_TIME * 1000/ NSTEP;
-////////////////////////////////////////////////////////////////////////////////////////
-    printf("Initializing\n");
-////////////////////////////////////////////////////////////////////////////////////////
 
 // allocating memory on CPU
 
-    int Npart[NSTEP*2];
 
-    GLuint all_vbo[4];
+    const int NFIELD= 1;
 
-    Part **all_part =  (Part**)calloc(NSTEP*2,sizeof(Part*));
+    int Npart[NSTEP*NFIELD];
+
+    GLuint all_vbo[2*NFIELD*NSTEP];
+
+    Part **all_part =  (Part**)calloc(NSTEP*NFIELD,sizeof(Part*));
     float *dt =  (float*)calloc(NSTEP,sizeof(float));
 
     for(int i=0; i<NSTEP; i++){
-      all_part[i] = new Part(FOLDER, STEP_NUMBER[i], NPROC, STAR, NPARTMAX, 0);
-      all_part[i]->alloc_GPU(&all_vbo[2*i+0],NPARTMAX);
+
+if(1)
+{
+      all_part[i] = new Part(FOLDER, STEP_NUMBER[i], NPROC,  NPARTMAX, 0);
+      all_part[i]->alloc_GPU(&all_vbo[NFIELD*i+0],NPARTMAX);
       all_part[i]->setColors();
       Npart[i] = all_part[i]->getN();
+}
 
-      all_part[i+1] = new Part(FOLDER, STEP_NUMBER[i], NPROC, STAR, NPARTMAX, 1);
-      all_part[i+1]->alloc_GPU(&all_vbo[2*i+2],NPARTMAX);
+
+if(0){
+      Part* part_amr = new Part(FOLDER, STEP_NUMBER[i], NPROC,  NPARTMAX, 1);
+      all_part[i+1] = new Part( part_amr, NPARTMAX );
+      delete part_amr;
+      //all_part[i+1] = new Part(FOLDER, STEP_NUMBER[i], NPROC, STAR, NPARTMAX, 1);
+      all_part[i+1]->alloc_GPU(&all_vbo[NFIELD*i+2 ],NPARTMAX);
       all_part[i+1]->setColors();
       Npart[i+1] = all_part[i+1]->getN();
+}
+
+if(0){
+      all_part[i+2] = new Part(FOLDER, STEP_NUMBER[i], NPROC, NPARTMAX, 2);
+      all_part[i+2]->alloc_GPU(&all_vbo[NFIELD*i+4],NPARTMAX);
+      all_part[i+2]->setColors();
+      Npart[i+2] = all_part[i+2]->getN();
+}
     }
 
 // Preliminar computations
@@ -101,55 +122,41 @@ int main(int argc, char *argv[]){
     //    all_part[i+1]->interpPos(all_part[i], t_yr, i, time_max);
     }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////
     printf("OK let's Go!!\n");
 ////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-// allocating memory on GPU
     int size;
-/*
-  for(int i=0; i<2; i++){
-    glBindBuffer(GL_ARRAY_BUFFER, all_vbo[2*i+0]);
-      size = 3* NPARTMAX * sizeof(float);
-      glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, all_vbo[2*i+1]);
-      size = 4* NPARTMAX * sizeof(float);
-      glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-  }
-
-#ifdef CUDA
-    cudaGLRegisterBufferObject( vbo[0] );
-    cudaMalloc((void **)&vbo,size);
-#endif // CUDA
-*/
 
     camera = new FreeFlyCamera(Vector3D(0.5,0.5,0.5), SCALE);
 
     start_time = SDL_GetTicks();
     last_time = start_time;
 
-
-
-    for(int i=0; i<2*NSTEP; i++){
-      size = (int)Npart[i] * sizeof(float);
-
-      printf("Npart=%d\n",Npart[i]);
-
-      glBindBuffer(GL_ARRAY_BUFFER, all_vbo[2*i+0]);
-        glBufferData(GL_ARRAY_BUFFER, 3*size,  all_part[i]->getPos(), GL_STATIC_DRAW);
-      glBindBuffer(GL_ARRAY_BUFFER, all_vbo[2*i+1]);
-        glBufferData(GL_ARRAY_BUFFER, 4*size,  all_part[i]->getColor(), GL_STATIC_DRAW);
+if(1)
+    for(int i=0; i<NFIELD; i++){
+      size = (int)Npart[0] * sizeof(float);
+      //printf("Npart=%d\n",Npart[i]);
+      glBindBuffer(GL_ARRAY_BUFFER, all_vbo[NFIELD*i+0]);
+        glBufferData(GL_ARRAY_BUFFER, 3*size,  all_part[0]->getPos(), GL_STATIC_DRAW);
+      glBindBuffer(GL_ARRAY_BUFFER, all_vbo[NFIELD*i+1]);
+        glBufferData(GL_ARRAY_BUFFER, 4*size,  all_part[0]->getColor(), GL_STATIC_DRAW);
       glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
 
 
 
+
     int current_step=0;
+    all_part[current_step]->sendVel();
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     for (;;){
 
@@ -219,16 +226,22 @@ int main(int argc, char *argv[]){
 
         camera->animate(elapsed_time);
 
-/*
         if (current_time< (NSTEP-1)*time_max){
           all_part[current_step]->move(elapsed_time);
-          int size = 3* (int)all_part[current_step]->getN() * sizeof(float);
-          glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-            glBufferData(GL_ARRAY_BUFFER, size,  all_part[current_step]->getPos(), GL_DYNAMIC_DRAW);
-          glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+if(0)
+          for(int i=0; i<NFIELD; i++){
+            size = (int)Npart[i] * sizeof(float);
+            glBindBuffer(GL_ARRAY_BUFFER, all_vbo[0]);
+              glBufferData(GL_ARRAY_BUFFER, 3*size,  all_part[current_step]->getPos(), GL_STATIC_DRAW);
+       //     glBindBuffer(GL_ARRAY_BUFFER, all_vbo[NFIELD*current_step+1]);
+      //        glBufferData(GL_ARRAY_BUFFER, 4*size,  all_part[current_step]->getColor(), GL_STATIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+          }
+
         }
-*/
-        DrawGL(all_vbo,  Npart );
+
+        DrawGL(all_vbo,Npart);
 
         stop_time = SDL_GetTicks();
         if ((stop_time - last_time) < time_per_frame){
@@ -237,9 +250,7 @@ int main(int argc, char *argv[]){
 
         if (current_step<NSTEP-1){
           if( total_time >= time_max* (current_step+1)){
-          //printf("time=%d step=%d Npart=%d\n", total_time, current_step, (int)all_part[current_step]->getN());
           current_step++;
-          //   printf("nstep=%d\n",current_step);
           }
         }
     }

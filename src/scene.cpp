@@ -1,5 +1,6 @@
 #include "scene.h"
 #include <stdio.h>
+
 #include <stdlib.h>
 #include <math.h>
 #include <SDL/SDL_opengl.h>
@@ -51,7 +52,7 @@ void render_part(GLuint* vbo, int N){
 void render(GLuint *vbo, int *N){
   render_cube();
   render_part(&vbo[0], N[0]);
-  render_part(&vbo[2], N[1]);
+ // render_part(&vbo[2], N[1]);
   glFlush();
 }
 

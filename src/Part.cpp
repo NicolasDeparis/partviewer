@@ -1,10 +1,18 @@
 #include "Part.h"
+#include "tirage.h"
 
 #include <cstdlib>
 #include <cstdio>
 #include <math.h>
+
 #include <omp.h>
 #include <SDL/SDL_opengl.h>
+
+#ifdef CUDA
+  #include <cuda_runtime.h>
+  #include <cuda_gl_interop.h>
+//  #include "kernel.cu"
+#endif // CUDA
 
 #include "physic.h"
 
@@ -12,11 +20,9 @@ Part::Part(int n){
 	alloc(n);
 }
 
-Part::Part( char* folder, int  fileNumber, int  nproc, int star, int n, int type){
-  m_star = star;
+Part::Part( char* folder, int  fileNumber, int  nproc, int n, int type){
+  m_star = 0;
 	m_type = type;
-
-
 	alloc(n);
 
 	switch(type){
@@ -27,20 +33,42 @@ Part::Part( char* folder, int  fileNumber, int  nproc, int star, int n, int type
     case 1:
       EMMA_read_amr(folder, fileNumber);
     break;
-	}
 
+    case 2:
+      m_star = 1;
+      EMMA_read_part(folder, fileNumber, nproc);
+    break;
+	}
 
   m_tyr = a2t(m_a);
 
  // setAge();
 }
 
+Part::Part( Part* AMR, int NPartTirage ){
+    alloc(NPartTirage);
+
+    m_type=AMR->getType();
+
+    int Ngrid = 512;
+    float rhoMin = 0;
+
+    //tirage_pos_1D( AMR->getPos(), AMR->getN(), 0, AMR->getMass(), AMR->getLev(), Ngrid, NPartTirage, m_pos, 210289 );
+    //tirage_pos_1D( AMR->getPos(), AMR->getN(), 1, AMR->getMass(), AMR->getLev(), Ngrid, NPartTirage, m_pos, 21028);
+    //tirage_pos_1D( AMR->getPos(), AMR->getN(), 2, AMR->getMass(), AMR->getLev(), Ngrid, NPartTirage, m_pos, 2102 );
+
+    m_N=tirage_SFR(AMR->getPos(), AMR->getN(), AMR->getMass(), AMR->getLev(), NPartTirage, rhoMin, m_pos, 210289, m_mass, AMR->getMass());
+}
+
 float *Part::getPos()    {	return m_pos;     }
 float *Part::getVel()    {	return m_vel;     }
 float *Part::getColor()  {	return m_color;   }
+float *Part::getMass()   {	return m_mass;    }
+float *Part::getLev()   {	return m_level;   }
 
 int   Part::getN()       {	return m_N;     }
 float Part::getA()       {	return m_a;     }
+int   Part::getType()       {	return m_type;     }
 float Part::getT()       {	return m_t;     }
 float Part::getTyr()     {	return m_tyr;     }
 float Part::getX  (int i){	return m_pos[3*i+0];  }
@@ -51,7 +79,6 @@ float Part::getVY (int i){	return m_vel[3*i+1];  }
 float Part::getVZ (int i){	return m_vel[3*i+2];  }
 float Part::getAge(int i){	return m_age[i];}
 int   Part::getIdx(int i){	return (int)m_idx[i];}
-
 float Part::getAgeMax(){	return m_agemax;}
 
 GLuint* Part::getVbo(){    return m_vbo ;}
@@ -74,21 +101,34 @@ void Part::alloc(const int n){
 
 void Part::alloc_GPU(GLuint *vbo, int n){
 
-//  printf("npartmax from GPU %d\n",NPARTMAX);
-
   glGenBuffers(2,&vbo[0]);
-//  printf("npartmax from GPU %d\n vbo0=%d \n vbo1=%d\n",n, m_vbo[0], m_vbo[1]);
+  m_vbo[0] = vbo[0];
 
-// printf("vbo=%d vbo=%d N=%d\n",vbo[0], vbo[1], n );
+  int size = n * sizeof(float);
 
-  int size;
   glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-    size = 3* n * sizeof(float);
-    glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 3*size, NULL, GL_STATIC_DRAW);
+    cudaGraphicsGLRegisterBuffer(&m_cuda_resource, vbo[0], cudaGraphicsMapFlagsNone);
   glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    size = 4* n * sizeof(float);
-    glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 4*size, NULL, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+#ifdef CUDA
+
+    cudaMalloc(&m_vel_d, 3*size);
+    cudaMalloc(&m_pos_d, 3*size );
+
+
+
+#endif // CUDA
+
+}
+
+void Part::sendVel(){
+    unsigned int size = 3*m_N * sizeof(float);
+    cudaMemcpy(m_vel_d, m_vel, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(m_pos_d, m_pos, size, cudaMemcpyHostToDevice);
+
 }
 
 Part::~Part(){
@@ -99,6 +139,7 @@ Part::~Part(){
   free(m_age);
   free(m_mass);
   free(m_level);
+
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -112,15 +153,20 @@ void Part::EMMA_read_part(char* folder, int  fileNumber, int  nproc){
 	m_nproc=nproc;
 	m_N=0;
 
-	int i=0, nloc, dump;
+	int  dump;
 	float mass, epot, ekin;
-	char filename[256];
 
+  char filename[256];
+  if(m_star)
+    sprintf(filename, "%s%05d/star/star.%05d", m_folder,m_fileNumber, m_fileNumber);
+  else
+    sprintf(filename, "%s%05d/part/part.%05d", m_folder,m_fileNumber, m_fileNumber);
 
-  sprintf(filename, "%s%05d/part/part.%05d", m_folder,m_fileNumber, m_fileNumber);
 	printf("Reading %s\n",filename);
 
+  int i=0;
 	for (int np=0; np<m_nproc; np++){
+
     if(m_star)
       sprintf(filename, "%s%05d/star/star.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
     else
@@ -130,6 +176,7 @@ void Part::EMMA_read_part(char* folder, int  fileNumber, int  nproc){
     f = fopen(filename, "rb");
     if(f == NULL) printf("Cannot open %s\n", filename);
 
+		int nloc;
 		dump = fread (&nloc, sizeof(int)  ,1,f);
 		dump = fread (&m_a,  sizeof(float),1,f);
 		m_N += nloc;
@@ -140,19 +187,20 @@ void Part::EMMA_read_part(char* folder, int  fileNumber, int  nproc){
 			dump = fread(&(m_vel[3*i]), sizeof(float), 3, f);
 			dump = fread (&(m_idx[i]),sizeof(float), 1, f);
 
-			dump = fread(&mass,         sizeof(float), 1, f);
-			dump = fread(&epot,         sizeof(float), 1, f);
-			dump = fread(&ekin,         sizeof(float), 1, f);
+			dump = fread(&mass,sizeof(float), 1, f);
+			dump = fread(&epot,sizeof(float), 1, f);
+			dump = fread(&ekin,sizeof(float), 1, f);
+
       if(m_star)
         dump = fread(&(m_age[i]),   sizeof(float), 1, f);
 			i++;
 		}
 		fclose(f);
 	}
-	sort();
+
+  if (!m_star) sort();
+  printf("Read Npart=%d OK\n",m_N);
 }
-
-
 
 void Part::EMMA_read_amr(char* folder, int  fileNumber){
 
@@ -186,42 +234,25 @@ void Part::EMMA_read_amr(char* folder, int  fileNumber){
 }
 
 void Part::setColors(){
-/*
-  float rho_max=0;
-
-  for(int ii=0; ii<4*m_N; ii++){
-     rho_max = fmax(m_mass[ii], rho_max);
-  }
-
-  rho_max=1;
-*/
-/*
-  for(int i=0; i<m_N; i++){
-    m_color[i*4+0] = 1.;//log(m_mass[ii]/rho_max);
-    m_color[i*4+1] = 1.;//log(m_mass[ii]/rho_max);
-    m_color[i*4+2] = 1.;//log(m_mass[ii]/rho_max);
-    m_color[i*4+3] = m_mass[i];//log(m_mass[ii]/rho_max);
-  }
-*/
 
   switch (m_type){
-  case 0:
+  case 0:  // Dark matter case
     for(int i=0; i<m_N; i++){
       //float vel = sqrt(pow(m_vel[3*i+0],2)+pow(m_vel[3*i+1],2)+pow(m_vel[3*i+2],2));
-      m_color[i*4+0] = 1;//m_vel[3*i+0];
-      m_color[i*4+1] = 1;//m_vel[3*i+1];
+      m_color[i*4+0] = 0;//m_vel[3*i+0];
+      m_color[i*4+1] = 0;//m_vel[3*i+1];
       m_color[i*4+2] = 1;//m_vel[3*i+2];
-      m_color[i*4+3] = 0.5;//(m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
+      m_color[i*4+3] = 0.9;//(m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
     }
   break;
 
-  case 1:
+  case 1:   // Gas case
     for(int i=0; i<m_N; i++){
-      //float vel = sqrt(pow(m_vel[3*i+0],2)+pow(m_vel[3*i+1],2)+pow(m_vel[3*i+2],2));
-      m_color[i*4+0] = 1;//m_vel[3*i+0];
+      //float vel = sqrt(pow(m_m_posvel[3*i+0],2)+pow(m_vel[3*i+1],2)+pow(m_vel[3*i+2],2));
+      m_color[i*4+0] = m_mass[i];//m_vel[3*i+0];
       m_color[i*4+1] = 0;//m_vel[3*i+1];
       m_color[i*4+2] = 0;//m_vel[3*i+2];
-      m_color[i*4+3] = m_mass[i];//(m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
+      m_color[i*4+3] = log(m_mass[i]);//(m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
     }
   break;
 
@@ -271,17 +302,26 @@ void Part::setAge(){
 //		printf("i %d\t idx %d \n", i, m_idx[i]);
 	}
 }
-
-
+/*
 void Part::move(float dt){
+  //printf("moving part N=%d \n", m_N);
+
   #pragma omp parallel for
 	for(int i=0; i< 3*m_N; i++){
     m_pos[i] += m_vel[i]*dt;
     if (m_pos[i]>1) m_pos[i]--;
     if (m_pos[i]<0) m_pos[i]++;
   }
-}
 
+
+  int block_size = 4;
+  int n_blocks = m_N/block_size + (m_N%block_size == 0 ? 0:1);
+-
+  //simple_vbo_kernel(float *pos, float *v, float dt)
+  simple_vbo_kernel <<< n_blocks, block_size >>> (m_vbo, m_vel_d, dt);
+
+}
+*/
 void Part::setV( Part* stop, float dt){
   #pragma omp parallel for
 	for(int i=0; i< m_N; i++){
@@ -302,10 +342,6 @@ void Part::setV( Part* stop, float dt){
     m_vel[3*i+0] = dx/dt;
     m_vel[3*i+1] = dy/dt;
     m_vel[3*i+2] = dz/dt;
-
-    //   ||.|||||||||||.|
-    //      |||||||||||.|||.
-    // .|||.|||||||||||
   }
 }
 
@@ -351,24 +387,22 @@ void Part::interpPos(Part* start, float *t, int step, int time_max){
 
 void Part::sort(){
 
-  static float *idx_tmp =  (float*)calloc(m_N,sizeof(float));
-  static float *pos_tmp =  (float*)calloc(3*m_N,sizeof(float));
-  static float *age_tmp =  (float*)calloc(m_N,sizeof(float));
+  float *idx_tmp =  (float*)calloc(m_N,sizeof(float));
+  float *pos_tmp =  (float*)calloc(3*m_N,sizeof(float));
+  float *age_tmp =  (float*)calloc(m_N,sizeof(float));
 
   #pragma omp parallel for
   for (int i=0;i<m_N;i++){
+    int id2sort = m_idx[i];
 
-      int id2sort = m_idx[i];
+    idx_tmp[id2sort]=m_idx[i];
 
-      idx_tmp[id2sort]=m_idx[i];
+    pos_tmp[3*id2sort+0]=m_pos[3*i+0];
+    pos_tmp[3*id2sort+1]=m_pos[3*i+1];
+    pos_tmp[3*id2sort+2]=m_pos[3*i+2];
 
-      pos_tmp[3*id2sort+0]=m_pos[3*i+0];
-      pos_tmp[3*id2sort+1]=m_pos[3*i+1];
-      pos_tmp[3*id2sort+2]=m_pos[3*i+2];
-
-      age_tmp[id2sort]=m_age[i];
+    age_tmp[id2sort]=m_age[i];
 	}
-
 
 // copy
 
@@ -381,9 +415,13 @@ void Part::sort(){
     m_pos[i]  = pos_tmp[i];
   }
 
+
+printf("plop\n");
+/*
   free(idx_tmp);
   free(pos_tmp);
   free(age_tmp);
+  */
 }
 
 int Part::append(Part* next, int cur_part, float t){
