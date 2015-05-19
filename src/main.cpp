@@ -30,7 +30,8 @@ void init_gl(void)
     glLoadIdentity();
     gluPerspective(70,(double)width/height,0.001,1000);
 
-    //glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_DEPTH_TEST);
     //glEnable(GL_POINT_SMOOTH);
 }
 
@@ -40,18 +41,11 @@ int main(int argc, char *argv[]){
     printf("Initializing\n");
 ////////////////////////////////////////////////////////////////////////////////////////
 
-// init GL
-
-
-
     SDL_Event event;
     const Uint32 time_per_frame = 1000/FPS;
 
     unsigned int width = LARGEUR_FENETRE;
     unsigned int height = HAUTEUR_FENETRE;
-
-    Uint32 last_time,current_time,elapsed_time, total_time; //for time animation
-    Uint32 start_time,stop_time; //for frame limit
 
     SDL_Init(SDL_INIT_VIDEO);
     atexit(stop);
@@ -62,24 +56,21 @@ int main(int argc, char *argv[]){
 
     init_gl();
 
-
-
+    camera = new FreeFlyCamera(Vector3D(0.5,0.5,0.5), SCALE);
 
 #ifdef CUDA
     cudaGLSetGLDevice(0);
     printf("CUDA enable\n");
 #endif // CUDA
 
-    int  fileNumber;
-    int time_max = ANIME_TIME * 1000/ NSTEP;
+///////////////////////////////////////////////////////////////////////////////
 
-// allocating memory on CPU
+
+    int time_max = ANIME_TIME * 1000/ NSTEP;
 
 
     const int NFIELD= 1;
-
     int Npart[NSTEP*NFIELD];
-
     GLuint all_vbo[2*NFIELD*NSTEP];
 
     Part **all_part =  (Part**)calloc(NSTEP*NFIELD,sizeof(Part*));
@@ -94,7 +85,6 @@ if(1)
       all_part[i]->setColors();
       Npart[i] = all_part[i]->getN();
 }
-
 
 if(0){
       Part* part_amr = new Part(FOLDER, STEP_NUMBER[i], NPROC,  NPARTMAX, 1);
@@ -114,28 +104,16 @@ if(0){
 }
     }
 
-// Preliminar computations
-
     for(int i=0; i<NSTEP-1; i++){
       dt[i] = getdt(all_part[i], all_part[i+1])/time_max;
       all_part[i]->setV(all_part[i+1], time_max);
     //    all_part[i+1]->interpPos(all_part[i], t_yr, i, time_max);
     }
 
-////////////////////////////////////////////////////////////////////////////////////////
-    printf("OK let's Go!!\n");
-////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
 
-    int size;
-
-    camera = new FreeFlyCamera(Vector3D(0.5,0.5,0.5), SCALE);
-
-    start_time = SDL_GetTicks();
-    last_time = start_time;
-
-if(1)
     for(int i=0; i<NFIELD; i++){
-      size = (int)Npart[0] * sizeof(float);
+      int size = (int)Npart[0] * sizeof(float);
       //printf("Npart=%d\n",Npart[i]);
       glBindBuffer(GL_ARRAY_BUFFER, all_vbo[NFIELD*i+0]);
         glBufferData(GL_ARRAY_BUFFER, 3*size,  all_part[0]->getPos(), GL_STATIC_DRAW);
@@ -144,19 +122,21 @@ if(1)
       glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
+    all_part[0]->init_GPU_mem();
 
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+    printf("OK let's Go!!\n");
+////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
 
     int current_step=0;
-    all_part[current_step]->sendVel();
 
-////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////
-
+    Uint32 stop_time, current_time,elapsed_time, total_time;
+    Uint32 start_time = SDL_GetTicks();
+    Uint32 last_time = start_time;
 
     for (;;){
 
@@ -165,8 +145,6 @@ if(1)
       last_time= current_time;
       total_time=current_time-start_time;
       float cur_t = all_part[current_step]->getTyr()+total_time*dt[current_step];
-      //printf("%f\n",cur_t);
-
       float z = 1./all_part[current_step]->getA() -1.;
       int fps = (int)(1000./elapsed_time);
       char caption[256];
@@ -174,17 +152,6 @@ if(1)
       SDL_WM_SetCaption(caption, NULL);
 
 ////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-        if((int)all_part[current_step]->getN() != (int)all_part[current_step+1]->getN()){
-          //Npart[current_step]+=part_current->append(all_part[current_step+1], Npart[current_step], cur_t);
-          printf("t=%f npart=%d \n",all_part[current_step]->getTyr(), (int)all_part[current_step]->getN());
-        }
-*/
-
-////////////////////////////////////////////////////////////////////////////////////////
-
-      //  start_time = SDL_GetTicks();
 
       while(SDL_PollEvent(&event)){
             switch(event.type){
@@ -199,6 +166,12 @@ if(1)
 
                       case SDLK_f:
                       SDL_WM_ToggleFullScreen(surface);
+                      break;
+
+                      case SDLK_a:
+                      start_time = current_time;
+                      last_time = start_time;
+                      all_part[0]->sendVel();
                       break;
 
                       case SDLK_ESCAPE:
@@ -228,18 +201,19 @@ if(1)
 
         if (current_time< (NSTEP-1)*time_max){
           all_part[current_step]->move(elapsed_time);
-
-if(0)
-          for(int i=0; i<NFIELD; i++){
-            size = (int)Npart[i] * sizeof(float);
-            glBindBuffer(GL_ARRAY_BUFFER, all_vbo[0]);
-              glBufferData(GL_ARRAY_BUFFER, 3*size,  all_part[current_step]->getPos(), GL_STATIC_DRAW);
-       //     glBindBuffer(GL_ARRAY_BUFFER, all_vbo[NFIELD*current_step+1]);
-      //        glBufferData(GL_ARRAY_BUFFER, 4*size,  all_part[current_step]->getColor(), GL_STATIC_DRAW);
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-          }
-
         }
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+/*
+        if((int)all_part[current_step]->getN() != (int)all_part[current_step+1]->getN()){
+          //Npart[current_step]+=part_current->append(all_part[current_step+1], Npart[current_step], cur_t);
+          printf("t=%f npart=%d \n",all_part[current_step]->getTyr(), (int)all_part[current_step]->getN());
+        }
+*/
+
 
         DrawGL(all_vbo,Npart);
 

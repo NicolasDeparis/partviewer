@@ -34,7 +34,7 @@ private:
 	GLuint m_vbo[2];
   struct cudaGraphicsResource *m_cuda_resource;
 
-	void alloc(int n);
+	void alloc_CPU(int n);
 
 
 	void setAge();
@@ -80,6 +80,7 @@ public:
 	float getAgeMax();
 
   void sendVel();
+  void init_GPU_mem();
 
 	void move(float t);
 	void sort();

@@ -17,13 +17,13 @@
 #include "physic.h"
 
 Part::Part(int n){
-	alloc(n);
+	alloc_CPU(n);
 }
 
 Part::Part( char* folder, int  fileNumber, int  nproc, int n, int type){
   m_star = 0;
 	m_type = type;
-	alloc(n);
+	alloc_CPU(n);
 
 	switch(type){
     case 0:
@@ -46,7 +46,7 @@ Part::Part( char* folder, int  fileNumber, int  nproc, int n, int type){
 }
 
 Part::Part( Part* AMR, int NPartTirage ){
-    alloc(NPartTirage);
+    alloc_CPU(NPartTirage);
 
     m_type=AMR->getType();
 
@@ -83,7 +83,7 @@ float Part::getAgeMax(){	return m_agemax;}
 
 GLuint* Part::getVbo(){    return m_vbo ;}
 
-void Part::alloc(const int n){
+void Part::alloc_CPU(const int n){
   unsigned int mem = 0;
 
 	m_pos =  (float*)calloc(3*n,sizeof(float)); mem+= 3*n*sizeof(float);
@@ -93,8 +93,6 @@ void Part::alloc(const int n){
 	m_age =  (float*)calloc(n,sizeof(float));   mem+= n*sizeof(float);
 	m_mass=  (float*)calloc(n,sizeof(float));   mem+= n*sizeof(float);
 	m_level= (float*)calloc(n,sizeof(float));   mem+= n*sizeof(float);
-
-  //for(int i=0;i<4*n;i++){m_color[i]=1;}
 
 	printf("Allocating %d Mo\n",mem/8/1024/1024);
 }
@@ -114,22 +112,25 @@ void Part::alloc_GPU(GLuint *vbo, int n){
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 #ifdef CUDA
-
     cudaMalloc(&m_vel_d, 3*size);
     cudaMalloc(&m_pos_d, 3*size );
-
-
-
 #endif // CUDA
 
 }
 
-void Part::sendVel(){
+void Part::init_GPU_mem(){
+
     unsigned int size = 3*m_N * sizeof(float);
     cudaMemcpy(m_vel_d, m_vel, size, cudaMemcpyHostToDevice);
     cudaMemcpy(m_pos_d, m_pos, size, cudaMemcpyHostToDevice);
-
 }
+
+
+void Part::sendVel(){
+    unsigned int size = 3*m_N * sizeof(float);
+    cudaMemcpy(m_vel_d, m_vel, size, cudaMemcpyHostToDevice);
+}
+
 
 Part::~Part(){
   free(m_pos);
@@ -233,32 +234,6 @@ void Part::EMMA_read_amr(char* folder, int  fileNumber){
   printf("Read OK\n");
 }
 
-void Part::setColors(){
-
-  switch (m_type){
-  case 0:  // Dark matter case
-    for(int i=0; i<m_N; i++){
-      //float vel = sqrt(pow(m_vel[3*i+0],2)+pow(m_vel[3*i+1],2)+pow(m_vel[3*i+2],2));
-      m_color[i*4+0] = 0;//m_vel[3*i+0];
-      m_color[i*4+1] = 0;//m_vel[3*i+1];
-      m_color[i*4+2] = 1;//m_vel[3*i+2];
-      m_color[i*4+3] = 0.9;//(m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
-    }
-  break;
-
-  case 1:   // Gas case
-    for(int i=0; i<m_N; i++){
-      //float vel = sqrt(pow(m_m_posvel[3*i+0],2)+pow(m_vel[3*i+1],2)+pow(m_vel[3*i+2],2));
-      m_color[i*4+0] = m_mass[i];//m_vel[3*i+0];
-      m_color[i*4+1] = 0;//m_vel[3*i+1];
-      m_color[i*4+2] = 0;//m_vel[3*i+2];
-      m_color[i*4+3] = log(m_mass[i]);//(m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
-    }
-  break;
-
-  }
-}
-
 int Part::getNpart(char* folder, int  fileNumber, int  nproc){
 
   int N=0;
@@ -302,26 +277,45 @@ void Part::setAge(){
 //		printf("i %d\t idx %d \n", i, m_idx[i]);
 	}
 }
-/*
-void Part::move(float dt){
-  //printf("moving part N=%d \n", m_N);
 
+#ifndef CUDA
+void Part::move(float dt){
   #pragma omp parallel for
 	for(int i=0; i< 3*m_N; i++){
     m_pos[i] += m_vel[i]*dt;
     if (m_pos[i]>1) m_pos[i]--;
     if (m_pos[i]<0) m_pos[i]++;
   }
-
-
-  int block_size = 4;
-  int n_blocks = m_N/block_size + (m_N%block_size == 0 ? 0:1);
--
-  //simple_vbo_kernel(float *pos, float *v, float dt)
-  simple_vbo_kernel <<< n_blocks, block_size >>> (m_vbo, m_vel_d, dt);
-
 }
-*/
+#endif // CUDA
+
+
+void Part::setColors(){
+
+  switch (m_type){
+  case 0:  // Dark matter case
+    for(int i=0; i<m_N; i++){
+      //float vel = sqrt(pow(m_vel[3*i+0],2)+pow(m_vel[3*i+1],2)+pow(m_vel[3*i+2],2));
+      m_color[i*4+0] = 0;//m_vel[3*i+0];
+      m_color[i*4+1] = 0;//m_vel[3*i+1];
+      m_color[i*4+2] = 1;//m_vel[3*i+2];
+      m_color[i*4+3] = 0.9;//(m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
+    }
+  break;
+
+  case 1:   // Gas case
+    for(int i=0; i<m_N; i++){
+      //float vel = sqrt(pow(m_m_posvel[3*i+0],2)+pow(m_vel[3*i+1],2)+pow(m_vel[3*i+2],2));
+      m_color[i*4+0] = m_mass[i];//m_vel[3*i+0];
+      m_color[i*4+1] = 0;//m_vel[3*i+1];
+      m_color[i*4+2] = 0;//m_vel[3*i+2];
+      m_color[i*4+3] = log(m_mass[i]);//(m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
+    }
+  break;
+
+  }
+}
+
 void Part::setV( Part* stop, float dt){
   #pragma omp parallel for
 	for(int i=0; i< m_N; i++){
