@@ -99,16 +99,14 @@ void Part::alloc_CPU(const int n){
 
 void Part::alloc_GPU(GLuint *vbo, int n){
 
-  glGenBuffers(2,&vbo[0]);
+  glGenBuffers(1,&vbo[0]);
   m_vbo[0] = vbo[0];
 
   int size = n * sizeof(float);
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, 3*size, NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 4*size, NULL, GL_STATIC_DRAW);
     cudaGraphicsGLRegisterBuffer(&m_cuda_resource, vbo[0], cudaGraphicsMapFlagsNone);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 #ifdef CUDA

@@ -115,13 +115,16 @@ if(0){
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-    for(int i=0; i<NFIELD; i++){
+
+
+
+    for(int i=0; i<NFIELD; i++)
+    {
       int size = (int)Npart[0] * sizeof(float);
       //printf("Npart=%d\n",Npart[i]);
-      glBindBuffer(GL_ARRAY_BUFFER, all_vbo[NFIELD*i+0]);
-        glBufferData(GL_ARRAY_BUFFER, 3*size,  all_part[0]->getPos(), GL_STATIC_DRAW);
-      glBindBuffer(GL_ARRAY_BUFFER, all_vbo[NFIELD*i+1]);
-        glBufferData(GL_ARRAY_BUFFER, size,  all_part[0]->getColor(), GL_STATIC_DRAW);
+      glBindBuffer(GL_ARRAY_BUFFER, all_vbo[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 3*size,  all_part[0]->getPos());
+        glBufferSubData(GL_ARRAY_BUFFER, 3*size, size,  all_part[0]->getColor());
       glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
