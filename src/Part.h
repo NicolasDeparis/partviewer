@@ -29,7 +29,7 @@ private:
 	float *m_age;
 	float *m_mass;
 	float *m_level;
-	float *m_color;
+	unsigned char *m_color;
 
 	GLuint m_vbo[2];
   struct cudaGraphicsResource *m_cuda_resource;
@@ -70,7 +70,7 @@ public:
 	float *getPos();
 	float *getVel();
 
-  float *getColor();
+  unsigned char *getColor();
   void setColors();
 
   float *getMass();

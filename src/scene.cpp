@@ -38,7 +38,7 @@ void render_part(GLuint* vbo, int N){
     glVertexPointer(3, GL_FLOAT, 0, NULL);
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glColorPointer(4, GL_FLOAT, 0, NULL);
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, NULL);
 
   glDrawArrays(GL_POINTS, 0, N);
 

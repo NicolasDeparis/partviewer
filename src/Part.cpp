@@ -62,7 +62,7 @@ Part::Part( Part* AMR, int NPartTirage ){
 
 float *Part::getPos()    {	return m_pos;     }
 float *Part::getVel()    {	return m_vel;     }
-float *Part::getColor()  {	return m_color;   }
+unsigned char *Part::getColor()  {	return m_color;   }
 float *Part::getMass()   {	return m_mass;    }
 float *Part::getLev()   {	return m_level;   }
 
@@ -88,7 +88,7 @@ void Part::alloc_CPU(const int n){
 
 	m_pos =  (float*)calloc(3*n,sizeof(float)); mem+= 3*n*sizeof(float);
 	m_vel =  (float*)calloc(3*n,sizeof(float)); mem+= 3*n*sizeof(float);
-	m_color= (float*)calloc(4*n,sizeof(float)); mem+= 4*n*sizeof(float);
+	m_color= (unsigned char*)calloc(4*n,sizeof(unsigned char)); mem+= 4*n*sizeof(char);
 	m_idx =  (float*)calloc(n,sizeof(float));   mem+= n*sizeof(float);
 	m_age =  (float*)calloc(n,sizeof(float));   mem+= n*sizeof(float);
 	m_mass=  (float*)calloc(n,sizeof(float));   mem+= n*sizeof(float);
@@ -108,7 +108,7 @@ void Part::alloc_GPU(GLuint *vbo, int n){
     glBufferData(GL_ARRAY_BUFFER, 3*size, NULL, GL_STATIC_DRAW);
     cudaGraphicsGLRegisterBuffer(&m_cuda_resource, vbo[0], cudaGraphicsMapFlagsNone);
   glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glBufferData(GL_ARRAY_BUFFER, 4*size, NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 #ifdef CUDA
@@ -296,11 +296,13 @@ void Part::setColors(){
   case 0:  // Dark matter case
     for(int i=0; i<m_N; i++){
       //float vel = sqrt(pow(m_vel[3*i+0],2)+pow(m_vel[3*i+1],2)+pow(m_vel[3*i+2],2));
-      m_color[i*4+0] = 0;//m_vel[3*i+0];
-      m_color[i*4+1] = 0;//m_vel[3*i+1];
-      m_color[i*4+2] = 1;//m_vel[3*i+2];
-      m_color[i*4+3] = 0.9;//(m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
+      m_color[i*4+0] = (unsigned char)0;//m_vel[3*i+0];
+      m_color[i*4+1] = (unsigned char)0;//m_vel[3*i+1];
+      m_color[i*4+2] = (unsigned char)255;//m_vel[3*i+2];
+      m_color[i*4+3] = (unsigned char)255  ;//(m_level[i]-6)/3;//log(m_mass[ii]/rho_max);
     }
+
+
   break;
 
   case 1:   // Gas case

@@ -63,6 +63,9 @@ int main(int argc, char *argv[]){
     printf("CUDA enable\n");
 #endif // CUDA
 
+
+printf("%d %d\n",(char)0, (unsigned char)250);
+//abort();
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -118,7 +121,7 @@ if(0){
       glBindBuffer(GL_ARRAY_BUFFER, all_vbo[NFIELD*i+0]);
         glBufferData(GL_ARRAY_BUFFER, 3*size,  all_part[0]->getPos(), GL_STATIC_DRAW);
       glBindBuffer(GL_ARRAY_BUFFER, all_vbo[NFIELD*i+1]);
-        glBufferData(GL_ARRAY_BUFFER, 4*size,  all_part[0]->getColor(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, size,  all_part[0]->getColor(), GL_STATIC_DRAW);
       glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
