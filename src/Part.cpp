@@ -139,129 +139,12 @@ Part::~Part(){
   free(m_mass);
   free(m_level);
 
+#ifdef CUDA
+  cudaFree(m_pos_d);
+  cudaFree(m_vel_d);
+#endif // CUDA
+
 }
-
-///////////////////////////////////////////////////////////////////////////
-//        EMMA IO
-///////////////////////////////////////////////////////////////////////////
-
-void Part::EMMA_read_part(char* folder, int  fileNumber, int  nproc){
-
-	m_folder=folder;
-	m_fileNumber=fileNumber;
-	m_nproc=nproc;
-	m_N=0;
-
-	int  dump;
-	float mass, epot, ekin;
-
-  char filename[256];
-  if(m_star)
-    sprintf(filename, "%s%05d/star/star.%05d", m_folder,m_fileNumber, m_fileNumber);
-  else
-    sprintf(filename, "%s%05d/part/part.%05d", m_folder,m_fileNumber, m_fileNumber);
-
-	printf("Reading %s\n",filename);
-
-  int i=0;
-	for (int np=0; np<m_nproc; np++){
-
-    if(m_star)
-      sprintf(filename, "%s%05d/star/star.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
-    else
-      sprintf(filename, "%s%05d/part/part.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
-
-    FILE* f = NULL;
-    f = fopen(filename, "rb");
-    if(f == NULL) printf("Cannot open %s\n", filename);
-
-		int nloc;
-		dump = fread (&nloc, sizeof(int)  ,1,f);
-		dump = fread (&m_a,  sizeof(float),1,f);
-		m_N += nloc;
-
-		for(int ii=0; ii<nloc; ii++){
-		  //printf("i= %d\n",i);
-			dump = fread(&(m_pos[3*i]), sizeof(float), 3, f);
-			dump = fread(&(m_vel[3*i]), sizeof(float), 3, f);
-			dump = fread (&(m_idx[i]),sizeof(float), 1, f);
-
-			dump = fread(&mass,sizeof(float), 1, f);
-			dump = fread(&epot,sizeof(float), 1, f);
-			dump = fread(&ekin,sizeof(float), 1, f);
-
-      if(m_star)
-        dump = fread(&(m_age[i]),   sizeof(float), 1, f);
-			i++;
-		}
-		fclose(f);
-	}
-
-  if (!m_star) sort();
-  printf("Read Npart=%d OK\n",m_N);
-}
-
-void Part::EMMA_read_amr(char* folder, int  fileNumber){
-
-	m_folder=folder;
-	m_fileNumber=fileNumber;
-	m_nproc=0;
-
-	int dump;
-	char filename[256];
-
-  sprintf(filename, "%s%05d/grid/alloct.%05d.field.d", m_folder,m_fileNumber, m_fileNumber);
-	printf("Reading %s\n",filename);
-
-  FILE* f = NULL;
-  f = fopen(filename, "rb");
-  if(f == NULL) printf("Cannot open %s\n", filename);
-
-  dump = fread (&m_N,sizeof(int)  ,1,f);
-  printf("Npart=%d\n",m_N);
-
-  dump = fread (&m_a,sizeof(float),1,f);
-
-  for(int i=0; i<m_N; i++){
-    dump = fread(&(m_pos[3*i]),sizeof(float), 3, f);
-    dump = fread(&(m_level[i]),sizeof(float), 1, f);
-    dump = fread(&(m_mass[i] ),sizeof(float), 1, f);
-  }
-
-  fclose(f);
-  printf("Read OK\n");
-}
-
-int Part::getNpart(char* folder, int  fileNumber, int  nproc){
-
-  int N=0;
-
-  int np;
-	for (np=0; np<nproc; np++){
-
-    char filename[128];
-    if(m_star)
-      sprintf(filename, "%s%05d/star/star.%05d.p%05d", folder,fileNumber, fileNumber, np);
-    else
-      sprintf(filename, "%s%05d/part/part.%05d.p%05d", folder,fileNumber, fileNumber, np);
-
-    FILE* f = NULL;
-    f = fopen(filename, "rb");
-    if(f == NULL) printf("Cannot open %s\n", filename);
-
-    int nloc;
-		int dump = fread (&nloc, sizeof(int)  ,1,f);
-		m_N += nloc;
-		N += nloc;
-    fclose(f);
-  }
-  return N;
-}
-
-
-///////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
 
 
 void Part::setAge(){
@@ -441,3 +324,130 @@ int Part::append(Part* next, int cur_part, float t){
 	m_N+=npart_append;
 	return npart_append;
 }
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////
+//        EMMA IO
+///////////////////////////////////////////////////////////////////////////
+
+void Part::EMMA_read_part(char* folder, int  fileNumber, int  nproc){
+
+	m_folder=folder;
+	m_fileNumber=fileNumber;
+	m_nproc=nproc;
+	m_N=0;
+
+	int  dump;
+	float mass, epot, ekin;
+
+  char filename[256];
+  if(m_star)
+    sprintf(filename, "%s%05d/star/star.%05d", m_folder,m_fileNumber, m_fileNumber);
+  else
+    sprintf(filename, "%s%05d/part/part.%05d", m_folder,m_fileNumber, m_fileNumber);
+
+	printf("Reading %s\n",filename);
+
+  int i=0;
+	for (int np=0; np<m_nproc; np++){
+
+    if(m_star)
+      sprintf(filename, "%s%05d/star/star.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
+    else
+      sprintf(filename, "%s%05d/part/part.%05d.p%05d", m_folder,m_fileNumber, m_fileNumber, np);
+
+    FILE* f = NULL;
+    f = fopen(filename, "rb");
+    if(f == NULL) printf("Cannot open %s\n", filename);
+
+		int nloc;
+		dump = fread (&nloc, sizeof(int)  ,1,f);
+		dump = fread (&m_a,  sizeof(float),1,f);
+		m_N += nloc;
+
+		for(int ii=0; ii<nloc; ii++){
+		  //printf("i= %d\n",i);
+			dump = fread(&(m_pos[3*i]), sizeof(float), 3, f);
+			dump = fread(&(m_vel[3*i]), sizeof(float), 3, f);
+			dump = fread (&(m_idx[i]),sizeof(float), 1, f);
+
+			dump = fread(&mass,sizeof(float), 1, f);
+			dump = fread(&epot,sizeof(float), 1, f);
+			dump = fread(&ekin,sizeof(float), 1, f);
+
+      if(m_star)
+        dump = fread(&(m_age[i]),   sizeof(float), 1, f);
+			i++;
+		}
+		fclose(f);
+	}
+
+  if (!m_star) sort();
+  printf("Read Npart=%d OK\n",m_N);
+}
+
+void Part::EMMA_read_amr(char* folder, int  fileNumber){
+
+	m_folder=folder;
+	m_fileNumber=fileNumber;
+	m_nproc=0;
+
+	int dump;
+	char filename[256];
+
+  sprintf(filename, "%s%05d/grid/alloct.%05d.field.d", m_folder,m_fileNumber, m_fileNumber);
+	printf("Reading %s\n",filename);
+
+  FILE* f = NULL;
+  f = fopen(filename, "rb");
+  if(f == NULL) printf("Cannot open %s\n", filename);
+
+  dump = fread (&m_N,sizeof(int)  ,1,f);
+  printf("Npart=%d\n",m_N);
+
+  dump = fread (&m_a,sizeof(float),1,f);
+
+  for(int i=0; i<m_N; i++){
+    dump = fread(&(m_pos[3*i]),sizeof(float), 3, f);
+    dump = fread(&(m_level[i]),sizeof(float), 1, f);
+    dump = fread(&(m_mass[i] ),sizeof(float), 1, f);
+  }
+
+  fclose(f);
+  printf("Read OK\n");
+}
+
+int Part::getNpart(char* folder, int  fileNumber, int  nproc){
+
+  int N=0;
+
+  int np;
+	for (np=0; np<nproc; np++){
+
+    char filename[128];
+    if(m_star)
+      sprintf(filename, "%s%05d/star/star.%05d.p%05d", folder,fileNumber, fileNumber, np);
+    else
+      sprintf(filename, "%s%05d/part/part.%05d.p%05d", folder,fileNumber, fileNumber, np);
+
+    FILE* f = NULL;
+    f = fopen(filename, "rb");
+    if(f == NULL) printf("Cannot open %s\n", filename);
+
+    int nloc;
+		int dump = fread (&nloc, sizeof(int)  ,1,f);
+		m_N += nloc;
+		N += nloc;
+    fclose(f);
+  }
+  return N;
+}
+
+
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+

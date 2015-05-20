@@ -34,6 +34,9 @@ void render_part(GLuint* vbo, int N){
   glEnableClientState( GL_VERTEX_ARRAY );
   glEnableClientState( GL_COLOR_ARRAY );
 
+
+
+
   glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
     glVertexPointer(3, GL_FLOAT, 0, NULL);
     glColorPointer(4, GL_UNSIGNED_BYTE,0, (void*)(3*N*sizeof(float)) );

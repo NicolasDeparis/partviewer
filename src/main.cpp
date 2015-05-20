@@ -64,8 +64,6 @@ int main(int argc, char *argv[]){
 #endif // CUDA
 
 
-printf("%d %d\n",(char)0, (unsigned char)250);
-//abort();
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -114,9 +112,6 @@ if(0){
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
 
     for(int i=0; i<NFIELD; i++)
     {
@@ -220,7 +215,6 @@ if(0){
         }
 */
 
-
         DrawGL(all_vbo,Npart);
 
         stop_time = SDL_GetTicks();
@@ -231,6 +225,7 @@ if(0){
         if (current_step<NSTEP-1){
           if( total_time >= time_max* (current_step+1)){
           current_step++;
+          //all_part[current_step]->sendVel();
           }
         }
     }

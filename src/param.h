@@ -13,8 +13,8 @@ const int NPARTMAX=pow(256,3);
 
 const int STAR = 0;
 
-//char FOLDER[128] = "/home/deparis/data/FF_cond150/data/"; const int  NPROC = 64;
-char FOLDER[128] = "/home/deparis/data/L3_cond25/data/"; const int  NPROC = 128;
+char FOLDER[128] = "/home/deparis/data/FF_cond150/data/"; const int  NPROC = 64;
+//char FOLDER[128] = "/home/deparis/data/L3_cond25/data/"; const int  NPROC = 128;
 //char FOLDER[128] = "/home/deparis/Quartz/data/test256/data/"; const int  NPROC = 6; const int NSTEP = 1; int STEP_NUMBER[NSTEP]={0};
 
 //const int NSTEP = 1; int STEP_NUMBER[NSTEP]={10};
