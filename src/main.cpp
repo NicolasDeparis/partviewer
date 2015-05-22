@@ -207,6 +207,13 @@ if(0){
 ////////////////////////////////////////////////////////////////////////////////////////
 
 
+        if (current_step<NSTEP-1){
+          if( total_time >= time_max* (current_step+1)){
+       //   all_part[current_step]->sendVel();
+          current_step++;
+          }
+        }
+
 
 /*
         if((int)all_part[current_step]->getN() != (int)all_part[current_step+1]->getN()){
@@ -221,14 +228,7 @@ if(0){
         if ((stop_time - last_time) < time_per_frame){
             SDL_Delay(time_per_frame - (stop_time - last_time));
         }
-
-        if (current_step<NSTEP-1){
-          if( total_time >= time_max* (current_step+1)){
-          current_step++;
-          //all_part[current_step]->sendVel();
-          }
-        }
-    }
+      }
 
 
     for(int i=0; i<NSTEP; i++){

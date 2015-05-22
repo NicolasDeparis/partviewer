@@ -7,7 +7,7 @@
 #define LARGEUR_FENETRE 1280
 #define HAUTEUR_FENETRE 720
 
-const int ANIME_TIME= 90;
+const int ANIME_TIME= 20;
 const float SCALE = 256;
 const int NPARTMAX=pow(256,3);
 
@@ -19,6 +19,7 @@ char FOLDER[128] = "/home/deparis/data/FF_cond150/data/"; const int  NPROC = 64;
 
 //const int NSTEP = 1; int STEP_NUMBER[NSTEP]={10};
 const int NSTEP = 2; int STEP_NUMBER[NSTEP]={0,10};
+//const int NSTEP = 3; int STEP_NUMBER[NSTEP]={0,5,10};
 //const int NSTEP = 6; int STEP_NUMBER[NSTEP]={0,2,4,6,8,10};
 //const int NSTEP = 11; int STEP_NUMBER[NSTEP]={0,1,2,3,4,5,6,7,8,9,10};
 //const int NSTEP = 6; int STEP_NUMBER[NSTEP]={5,6,7,8,9,10};

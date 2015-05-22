@@ -3,7 +3,6 @@
 
 #include <SDL/SDL_opengl.h>
 
-
 class Part{
 private:
 	char* 	m_folder;

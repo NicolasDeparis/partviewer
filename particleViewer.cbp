@@ -26,6 +26,7 @@
 			<Add library="GLU" />
 			<Add library="gomp" />
 		</Linker>
+		<Unit filename="src/IO_EMMA.h" />
 		<Unit filename="src/Part.cpp" />
 		<Unit filename="src/Part.cu" />
 		<Unit filename="src/Part.h" />
