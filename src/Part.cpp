@@ -106,7 +106,9 @@ void Part::alloc_GPU(GLuint *vbo, int n){
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
     glBufferData(GL_ARRAY_BUFFER, 4*size, NULL, GL_STATIC_DRAW);
+#ifdef CUDA
     cudaGraphicsGLRegisterBuffer(&m_cuda_resource, vbo[0], cudaGraphicsMapFlagsNone);
+#endif // CUDA
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 #ifdef CUDA
@@ -117,18 +119,19 @@ void Part::alloc_GPU(GLuint *vbo, int n){
 }
 
 void Part::init_GPU_mem(){
-
+#ifdef CUDA
     unsigned int size = 3*m_N * sizeof(float);
     cudaMemcpy(m_vel_d, m_vel, size, cudaMemcpyHostToDevice);
     cudaMemcpy(m_pos_d, m_pos, size, cudaMemcpyHostToDevice);
+#endif // CUDA
 }
-
 
 void Part::sendVel(){
+#ifdef CUDA
     unsigned int size = 3*m_N * sizeof(float);
     cudaMemcpy(m_vel_d, m_vel, size, cudaMemcpyHostToDevice);
+#endif // CUDA
 }
-
 
 Part::~Part(){
   free(m_pos);

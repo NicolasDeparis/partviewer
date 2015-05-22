@@ -1,36 +1,37 @@
 
+ARCH = CPU
+
 C_OBJS = 	main.o\
 					Part.o\
 					freeflycamera.o\
 					scene.o\
 					vector3d.o\
 					physic.o\
-					kernel.o\
 					tirage.o
 
 WORKDIR = `pwd`
 
 CC = gcc
-CXX = nvcc
+CXX = g++
 NVCC = nvcc
 
 AR = ar
-LD = nvcc
+LD = g++
 WINDRES = windres
 
 INC =
 
-#CFLAGS = -fopenmp -DGL_GLEXT_PROTOTYPES -I/Library/Frameworks/SDL.framework/Headers
-CFLAGS = -DGL_GLEXT_PROTOTYPES -DCUDA
+CFLAGS = -DGL_GLEXT_PROTOTYPES
+
+ifeq ($(ARCH),GPU)
+	$(CFLAGS) = $(CFLAGS) -DCUDA
+else
+	$(CFLAGS) = $(CFLAGS) -fopenmp
+endif
 
 RESINC =
 LIBDIR =
-# LIB = -lSDL `sdl-config --cflags --libs` -framework Cocoa -lGL -lGLU -lgomp
-#LIB = -framework SDL -framework OpenGl -framework GLUT -framework Cocoa -v -lc++
-# -macosx_version_min 10.9.0
-
 LIB = -lSDL -lGL -lGLU -lgomp -lgsl -lgslcblas
-
 LDFLAGS =
 
 INC_DEFAULT = $(INC)
@@ -53,6 +54,17 @@ clean: clean_default
 
 before_default:
 	test -d $(OBJDIR_DEFAULT) || mkdir -p $(OBJDIR_DEFAULT)
+ifeq ($(ARCH),GPU)
+	echo "GPU"
+else
+	echo "CPU"
+endif
+ifeq ($(ARCH),GPU)
+	$(CFLAGS) = $(CFLAGS) -DCUDA
+else
+	$(CFLAGS) = $(CFLAGS) -fopenmp
+endif
+
 
 after_default:
 
@@ -65,9 +77,11 @@ out_default: before_default $(OBJ_DEFAULT) $(DEP_DEFAULT)
 $(OBJDIR_DEFAULT)/%.o: $(SRCDIR_DEFAULT)/%.cpp
 	$(CXX) $(CFLAGS_DEFAULT) $(INC_DEFAULT) -c $< -o $@
 
-$(OBJDIR_DEFAULT)/%.o: $(SRCDIR_DEFAULT)/kernel.cu
-	$(NVCC) $(CFLAGS_DEFAULT) $(INC_DEFAULT) -c $< -o $@
 
+ifeq ($(ARCH),GPU)
+$(OBJDIR_DEFAULT)/%.o: $(SRCDIR_DEFAULT)/%.cu
+	$(NVCC) $(CFLAGS_DEFAULT) $(INC_DEFAULT) -c $< -o $@
+endif
 
 clean_default:
 	rm -f $(OBJ_DEFAULT) $(OUT_DEFAULT)
